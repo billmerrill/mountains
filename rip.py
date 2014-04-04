@@ -108,17 +108,6 @@ def s2n(dataset):
 
                 write_triangle(sx,sy,triangle, normal)
 
-                # t = triangle
-                # print "V(%s,%s,%s) W(%s,%s,%s)" %  (t['b'][PX] - t['a'][PX], t['b'][PY] - t['a'][PY], t['b'][PZ] - t['a'][PZ],
-                #         t['c'][PX] - t['a'][PX], t['c'][PY] - t['a'][PY], t['c'][PZ] - t['a'][PZ])
-                #
-                # va = numpy.subtract(triangle['b'], triangle['a']);
-                # wa = numpy.subtract(triangle['c'], triangle['a']);
-                # print "V(%s,%s,%s) W(%s,%s,%s)" % ( va[0], va[1], va[2], wa[0], wa[1], wa[2] )
-                # print "\n\n"
-
-
-
 
 import pprint
 def main():
