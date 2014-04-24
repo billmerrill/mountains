@@ -4,6 +4,7 @@ import gdalconst
 import pprint
 import math
 import numpy
+from haversine import haversine
 
 PX = 0
 PY = 1
@@ -88,26 +89,42 @@ def write_triangle(sx,sy,triangle, normal):
             triangle['b'][PX], triangle['b'][PY], triangle['b'][PZ],
             triangle['c'][PX], triangle['c'][PY], triangle['c'][PZ]))
 
+def get_pixel_meters(dataset):
+    geotransform = dataset.GetGeoTransform()
+    x_size_deg = geotransform[1]
+    y_size_deg = geotransform[5]
+    x_size_km = haversine((0,0),(x_size_deg, 0))
+    y_size_km = haversine((0,0), (0, y_size_deg))
+    return (x_size_km*1000, y_size_km*1000)
+
+
 def get_mesh(dataset):
     destination = "test-output-file.txt"
     band = dataset.GetRasterBand(1)
+    pixel_size = get_pixel_meters(dataset)
+
     emap = []
     mesh = []
 
-    for i in range(0, dataset.RasterYSize):
-        scanline = band.ReadRaster( 0, i, band.XSize, 1, \
+    sample_scale = 2
+    sample_height = dataset.RasterYSize / sample_scale
+    sample_width = dataset.RasterXSize / sample_scale
+
+    for i in range(0, sample_height):
+        scanline = band.ReadRaster( 0, i*sample_scale, band.XSize, 1, \
             band.XSize, 1, gdal.GDT_Float32 )
-        emap.append(struct.unpack('f' * band.XSize, scanline))
+        scanline = struct.unpack('f' * band.XSize, scanline)
+        emap.append(scanline[::sample_scale])
 
     print "lines: %s" % len(emap)
     print "cols: %s" % len(emap[0])
     # print emap[10][20]
 
     def make_pt(x,y):
-        return (float(x),float(y),float(emap[y][x]))
+        return (float(x) * sample_scale * pixel_size[0], float(y) * sample_scale * pixel_size[1], float(emap[y][x]))
 
-    for sy in range(0, dataset.RasterYSize-1):
-        for sx in range(0, dataset.RasterXSize-1):
+    for sy in range(0, sample_height-1):
+        for sx in range(0, sample_width-1):
             a_triangle = {TA:make_pt(sx,sy),
                         TB:make_pt(sx+1,sy+1),
                         TC:make_pt(sx+1,sy)}
@@ -142,6 +159,7 @@ def write_stl(outfile, mesh):
 import pprint
 def main():
     dataset = gdal.Open('mto.tif', gdal.GA_ReadOnly)
+    get_general_info(dataset)
     mesh = get_mesh(dataset)
     print "writing"
     write_stl("output.stl", mesh)
