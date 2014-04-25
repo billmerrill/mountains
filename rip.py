@@ -93,20 +93,29 @@ def get_pixel_meters(dataset):
     geotransform = dataset.GetGeoTransform()
     x_size_deg = geotransform[1]
     y_size_deg = geotransform[5]
-    x_size_km = haversine((0,0),(x_size_deg, 0))
-    y_size_km = haversine((0,0), (0, y_size_deg))
-    return (x_size_km*1000, y_size_km*1000)
+    x_size_m = haversine((0,0),(x_size_deg, 0)) * 1000
+    y_size_m = haversine((0,0), (0, y_size_deg)) * 1000
+    return (math.copysign(x_size_m, x_size_deg), math.copysign(y_size_m, y_size_deg))
 
 
+# heightmap is in meters, convert everything else to meters
 def get_mesh(dataset):
     destination = "test-output-file.txt"
     band = dataset.GetRasterBand(1)
+
+
     pixel_size = get_pixel_meters(dataset)
+    output_scalar = .1
+    sample_scale = 5
+
+    # multiple this vector again each point for the poly space
+    pt_scalar = (sample_scale * pixel_size[PX] * output_scalar,
+                 sample_scale * pixel_size[PY] * output_scalar,
+                 output_scalar)
 
     emap = []
     mesh = []
 
-    sample_scale = 2
     sample_height = dataset.RasterYSize / sample_scale
     sample_width = dataset.RasterXSize / sample_scale
 
@@ -116,12 +125,12 @@ def get_mesh(dataset):
         scanline = struct.unpack('f' * band.XSize, scanline)
         emap.append(scanline[::sample_scale])
 
-    print "lines: %s" % len(emap)
-    print "cols: %s" % len(emap[0])
-    # print emap[10][20]
+    print "Sampled image is %s x %s pixels." % (len(emap), len(emap[0]))
 
     def make_pt(x,y):
-        return (float(x) * sample_scale * pixel_size[0], float(y) * sample_scale * pixel_size[1], float(emap[y][x]))
+        return (float(x) * pt_scalar[PX],
+                float(y) * pt_scalar[PY],
+                float(emap[y][x]) * pt_scalar[PZ])
 
     for sy in range(0, sample_height-1):
         for sx in range(0, sample_width-1):
@@ -136,15 +145,11 @@ def get_mesh(dataset):
 
             mesh.append((a_normal, a_triangle))
             mesh.append((b_normal, b_triangle))
-            # write_triangle(sx,sy,triangle, normal)
 
-    print "triangles:  %s" % len(mesh)
+    print "Generated %s triangles." % len(mesh)
     return mesh
 
 def write_stl(outfile, mesh):
-    def write_header(f, mesh):
-        pass
-
     with open(outfile, 'wb') as dest_file:
         dest_file.write(struct.pack("80sI", b'Quick Release Lever', len(mesh)))
         for f in mesh:
@@ -156,14 +161,12 @@ def write_stl(outfile, mesh):
 
 
 
-import pprint
 def main():
     dataset = gdal.Open('mto.tif', gdal.GA_ReadOnly)
     get_general_info(dataset)
     mesh = get_mesh(dataset)
-    print "writing"
+    print "Writing STL"
     write_stl("output.stl", mesh)
-# get_general_info(dataset)
 # emap = get_map(dataset)
 
 #    lets_map_a_point(map, dataset)
