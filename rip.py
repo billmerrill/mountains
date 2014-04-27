@@ -106,7 +106,7 @@ def get_mesh(dataset):
 
     pixel_size = get_pixel_meters(dataset)
     output_scalar = .1
-    sample_scale = 5
+    sample_scale = 10
 
     # multiple this vector again each point for the poly space
     pt_scalar = (sample_scale * pixel_size[PX] * output_scalar,
@@ -127,11 +127,17 @@ def get_mesh(dataset):
 
     print "Sampled image is %s x %s pixels." % (len(emap), len(emap[0]))
 
-    def make_pt(x,y):
+    def make_pt(x,y,z=None):
+        if z is None:
+            z = float(emap[y][x]) * pt_scalar[PZ]
+        else:
+            z = z * pt_scalar[PX]
+
         return (float(x) * pt_scalar[PX],
                 float(y) * pt_scalar[PY],
-                float(emap[y][x]) * pt_scalar[PZ])
+                z)
 
+    # generate a mountain mesh
     for sy in range(0, sample_height-1):
         for sx in range(0, sample_width-1):
             a_triangle = {TA:make_pt(sx,sy),
@@ -145,6 +151,85 @@ def get_mesh(dataset):
 
             mesh.append((a_normal, a_triangle))
             mesh.append((b_normal, b_triangle))
+
+
+    # generate a base box, bottom is at height 0 XXX TODO THESE NEED TO BE SCALED
+
+    if True:
+        for sy in range(0, sample_height-1):
+            # -x side
+            a_triangle = {TA: make_pt(0, sy),
+                          TB: make_pt(0, sy, 0),
+                          TC: make_pt(0, sy+1, 0)}
+            a_normal = compute_normal(a_triangle) # -1,0,0 ?
+            b_triangle = {TA: make_pt(0, sy+1),
+                          TB: make_pt(0, sy),
+                          TC: make_pt(0, sy+1, 0)}
+            b_normal = compute_normal(b_triangle)
+
+            mesh.append((a_normal, a_triangle))
+            mesh.append((b_normal, b_triangle))
+
+            if True:
+                # +x side
+                a_triangle = {TA: make_pt(sample_width-1, sy),
+                              TB: make_pt(sample_width-1, sy+1, 0),
+                              TC: make_pt(sample_width-1, sy, 0)}
+                a_normal = compute_normal(a_triangle) # 1,0,0 ?
+                b_triangle = {TA: make_pt(sample_width-1, sy+1),
+                              TB: make_pt(sample_width-1, sy+1, 0),
+                              TC: make_pt(sample_width-1, sy)}
+                b_normal = compute_normal(b_triangle)
+
+                mesh.append((a_normal, a_triangle))
+                mesh.append((b_normal, b_triangle))
+    if True:
+        for sx in range(0, sample_width-1):
+            # +y side
+            a_triangle = {TA: make_pt(sx, 0),
+                          TB: make_pt(sx+1, 0, 0),
+                          TC: make_pt(sx, 0, 0)}
+            a_normal = compute_normal(a_triangle) # 0,1,0 ?
+            b_triangle = {TA: make_pt(sx+1, 0),
+                          TB: make_pt(sx+1, 0, 0),
+                          TC: make_pt(sx, 0)}
+            b_normal = compute_normal(b_triangle)
+
+            mesh.append((a_normal, a_triangle))
+            mesh.append((b_normal, b_triangle))
+
+            if True:
+                # -y side
+                a_triangle = {TA: make_pt(sx, sample_height-1),
+                              TB: make_pt(sx, sample_height-1, 0),
+                              TC: make_pt(sx+1, sample_height-1, 0)}
+                a_normal = compute_normal(a_triangle) # 0,-1,0 ?
+                b_triangle = {TA: make_pt(sx+1, sample_height-1),
+                              TB: make_pt(sx, sample_height-1),
+                              TC: make_pt(sx+1, sample_height-1, 0)}
+                b_normal = compute_normal(b_triangle)
+
+                mesh.append((a_normal, a_triangle))
+                mesh.append((b_normal, b_triangle))
+
+    # base
+    if False:
+        a_triangle = {TA: make_pt(0,0,0),
+                      TB: make_pt(sample_width-1, sample_height-1 , 0),
+                      TC: make_pt(0, sample_height-1, 0)}
+        a_normal = compute_normal(a_triangle) # 0,1,0 ?
+        b_triangle = {TA: make_pt(sample_width-1, 0, 0),
+                      TB: make_pt(sample_width-1, sample_height-1, 0),
+                      TC: make_pt(0,0,0)}
+        b_normal = compute_normal(b_triangle)
+        mesh.append((a_normal, a_triangle))
+        mesh.append((b_normal, b_triangle))
+        pprint.pprint(a_triangle)
+        pprint.pprint(a_normal)
+
+        pprint.pprint(b_triangle)
+        pprint.pprint(b_normal)
+
 
     print "Generated %s triangles." % len(mesh)
     return mesh
