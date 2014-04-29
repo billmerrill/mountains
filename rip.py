@@ -25,16 +25,8 @@ def get_general_info(dataset):
     print 'Projection is '
     pprint.pprint(dataset.GetProjection())
 
-    geotransform = dataset.GetGeoTransform()
-    if not geotransform is None:
-        print 'Origin = (',geotransform[0], ',',geotransform[3],')'
-        print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
-
-
-def get_map(dataset):
+    if True:
         band = dataset.GetRasterBand(1)
-        avgs = []
-        emap = []
         print 'Band Type=',gdal.GetDataTypeName(band.DataType)
 
         min = band.GetMinimum()
@@ -54,15 +46,10 @@ def get_map(dataset):
         else:
             print 'Band has no color table'
 
-        for i in range(0,719):
-            scanline = band.ReadRaster( 0, i, band.XSize, 1, \
-                band.XSize, 1, gdal.GDT_Float32 )
-
-            # tuple_of_floats = struct.unpack('f' * band.XSize, scanline)
-            emap.append(struct.unpack('f' * band.XSize, scanline))
-            # avgs.append( math.fsum(tuple_of_floats) / len(tuple_of_floats))
-
-        return emap
+    geotransform = dataset.GetGeoTransform()
+    if not geotransform is None:
+        print 'Origin = (',geotransform[0], ',',geotransform[3],')'
+        print 'Pixel Size = (',geotransform[1], ',',geotransform[5],')'
 
 
 def compute_normal(triangle):
@@ -321,12 +308,6 @@ def main():
     mesh = get_mesh(dataset)
     print "Writing STL"
     write_stl("output.stl", mesh)
-# emap = get_map(dataset)
-
-#    lets_map_a_point(map, dataset)
-#    print len(emap)
-#    for i in emap:
-#	print i
 
 
 main()
