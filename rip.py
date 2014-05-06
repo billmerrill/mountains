@@ -87,13 +87,15 @@ def get_pixel_meters(dataset):
 
 # heightmap is in meters, convert everything else to meters
 def get_mesh(dataset):
-    destination = "test-output-file.txt"
     band = dataset.GetRasterBand(1)
 
 
     pixel_size = get_pixel_meters(dataset)
-    output_scalar = .1
+    output_scalar = .0035
     sample_scale = 100
+    thick = 5
+
+
 
     # multiple this vector again each point for the poly space
     pt_scalar = (sample_scale * pixel_size[PX] * output_scalar,
@@ -124,11 +126,13 @@ def get_mesh(dataset):
                 float(y) * pt_scalar[PY],
                 z)
 
+
+
     print "Scaled space option max is:"
     pprint.pprint(make_pt(sample_width-1, sample_height-1, 0))
 
     # generate a mountain mesh
-    if True:
+    if False:
         for sy in range(0, sample_height-1):
             for sx in range(0, sample_width-1):
                 a_triangle = {TA:make_pt(sx,sy),
@@ -203,27 +207,10 @@ def get_mesh(dataset):
                 mesh.append((a_normal, a_triangle))
                 mesh.append((b_normal, b_triangle))
 
-    # base
+
+    # solid base
+
     if False:
-        a_triangle = {TA: make_pt(0,0,0),
-                      TB: make_pt(sample_width-1, sample_height-1 , 0),
-                      TC: make_pt(0, sample_height-1, 0)}
-        a_normal = compute_normal(a_triangle) # 0,1,0 ?
-        b_triangle = {TA: make_pt(sample_width-1, 0, 0),
-                      TB: make_pt(sample_width-1, sample_height-1, 0),
-                      TC: make_pt(0,0,0)}
-        b_normal = compute_normal(b_triangle)
-        mesh.append((a_normal, a_triangle))
-        mesh.append((b_normal, b_triangle))
-        pprint.pprint(a_triangle)
-        pprint.pprint(a_normal)
-
-        pprint.pprint(b_triangle)
-        pprint.pprint(b_normal)
-
-    # real base
-
-    if True:
         yhalf = sample_height / 2
         xhalf = sample_width / 2
         yquarter = sample_height / 4
@@ -286,6 +273,119 @@ def get_mesh(dataset):
         mesh.append((compute_normal(e_triangle), e_triangle))
         mesh.append((compute_normal(f_triangle), f_triangle))
 
+    # hollow base
+
+    def tr_pt(point, vector):
+        return (point[PX] + vector[PX], point[PY] + vector[PY], point[PZ] + vector[PZ])
+
+    if True:
+        # x side edges
+        for sy in range(1, sample_height-2):
+            a_triangle = {TA: make_pt(0, sy, 0),
+                          TB: tr_pt(make_pt(0, sy, 0), (thick, 0, 0)),
+                          TC: make_pt(0, sy+1, 0)}
+            b_triangle = {TA: make_pt(0, sy+1, 0),
+                          TB: tr_pt(make_pt(0, sy, 0), (thick, 0, 0)),
+                          TC: tr_pt(make_pt(0, sy+1, 0), (thick, 0, 0))}
+
+            mesh.append((compute_normal(a_triangle), a_triangle))
+            mesh.append((compute_normal(b_triangle), b_triangle))
+
+            a_triangle = {TA: make_pt(sample_width-1, sy, 0),
+                          TB: make_pt(sample_width-1, sy+1, 0),
+                          TC: tr_pt(make_pt(sample_width-1, sy, 0), (-thick, 0, 0))}
+            b_triangle = {TA: make_pt(sample_width-1, sy+1, 0),
+                          TC: tr_pt(make_pt(sample_width-1, sy, 0), (-thick, 0, 0)),
+                          TB: tr_pt(make_pt(sample_width-1, sy+1, 0), (-thick, 0, 0))}
+
+            mesh.append((compute_normal(a_triangle), a_triangle))
+            mesh.append((compute_normal(b_triangle), b_triangle))
+
+
+        # y sides
+        for sx in range(1, sample_width-2):
+            a_triangle = {TA: make_pt(sx, 0, 0),
+                          TB: make_pt(sx+1, 0, 0),
+                          TC: tr_pt(make_pt(sx, 0, 0), (0, -thick, 0))}
+            b_triangle = {TA: make_pt(sx+1, 0, 0),
+                          TB: tr_pt(make_pt(sx+1, 0, 0), (0, -thick, 0)),
+                          TC: tr_pt(make_pt(sx, 0, 0), (0, -thick, 0))}
+
+            mesh.append((compute_normal(a_triangle), a_triangle))
+            mesh.append((compute_normal(b_triangle), b_triangle))
+
+            a_triangle = {TA: make_pt(sx, sample_height-1, 0),
+                          TC: make_pt(sx+1, sample_height-1, 0),
+                          TB: tr_pt(make_pt(sx, sample_height-1, 0), (0, thick, 0))}
+            b_triangle = {TA: make_pt(sx+1, sample_height-1, 0),
+                          TB: tr_pt(make_pt(sx+1, sample_height-1, 0), (0, thick, 0)),
+                          TC: tr_pt(make_pt(sx, sample_height-1, 0), (0, thick, 0))}
+
+            mesh.append((compute_normal(a_triangle), a_triangle))
+            mesh.append((compute_normal(b_triangle), b_triangle))
+
+        # corners
+        #-x+y
+        a_triangle = {TA: make_pt(1, 0, 0),
+                      TB: tr_pt(make_pt(1, 0, 0), (0, -thick, 0)),
+                      TC: make_pt(0, 0, 0)}
+        b_triangle = {TA: make_pt(0, 1, 0),
+                      TB: make_pt(0, 0, 0),
+                      TC: tr_pt(make_pt(0, 1, 0), (thick, 0, 0))}
+        c_triangle = {TA: make_pt(0, 0, 0),
+                      TB: tr_pt(make_pt(1, 0, 0), (0, -thick, 0)),
+                      TC: tr_pt(make_pt(0, 1, 0), (thick, 0, 0))}
+
+        mesh.append((compute_normal(a_triangle), a_triangle))
+        mesh.append((compute_normal(b_triangle), b_triangle))
+        mesh.append((compute_normal(c_triangle), c_triangle))
+
+        #+x+y
+        a_triangle = {TA: make_pt(sample_width-2, 0, 0),
+                      TB: make_pt(sample_width-1, 0, 0),
+                      TC: tr_pt(make_pt(sample_width-2, 0, 0), (0, -thick, 0))}
+        b_triangle = {TA: make_pt(sample_width-1, 0, 0),
+                      TB: make_pt(sample_width-1, 1, 0),
+                      TC: tr_pt(make_pt(sample_width-1, 1, 0), (-thick, 0, 0))}
+        c_triangle = {TA: make_pt(sample_width-1, 0, 0),
+                      TB: tr_pt(make_pt(sample_width-1, 1, 0), (-thick, 0, 0)),
+                      TC: tr_pt(make_pt(sample_width-2, 0, 0), (0, -thick, 0))}
+
+        mesh.append((compute_normal(a_triangle), a_triangle))
+        mesh.append((compute_normal(b_triangle), b_triangle))
+        mesh.append((compute_normal(c_triangle), c_triangle))
+
+        #+x-y
+        a_triangle = {TA: make_pt(sample_width-1, sample_height-1, 0),
+                      TB: make_pt(sample_width-2, sample_height-1, 0),
+                      TC: tr_pt(make_pt(sample_width-2, sample_height-1, 0), (0, thick, 0))}
+        b_triangle = {TA: make_pt(sample_width-1, sample_height-2, 0),
+                      TB: make_pt(sample_width-1, sample_height-1, 0),
+                      TC: tr_pt(make_pt(sample_width-1, sample_height-2, 0), (-thick, 0, 0))}
+        c_triangle = {TA: make_pt(sample_width-1, sample_height-1, 0),
+                      TB: tr_pt(make_pt(sample_width-2, sample_height-1, 0), (0, thick, 0)),
+                      TC: tr_pt(make_pt(sample_width-1, sample_height-2, 0), (-thick, 0, 0))}
+
+        mesh.append((compute_normal(a_triangle), a_triangle))
+        mesh.append((compute_normal(b_triangle), b_triangle))
+        mesh.append((compute_normal(c_triangle), c_triangle))
+
+        #-x-y
+        a_triangle = {TA: make_pt(0, sample_height-1, 0),
+                      TB: make_pt(0, sample_height-2, 0),
+                      TC: tr_pt(make_pt(0, sample_height-2, 0), (thick, 0, 0))}
+        b_triangle = {TA: make_pt(0, sample_height-1, 0),
+                      TB: tr_pt(make_pt(1, sample_height-1, 0), (0, thick, 0)),
+                      TC: make_pt(1, sample_height-1, 0)}
+        c_triangle = {TA: make_pt(0, sample_height-1, 0),
+                      TB: tr_pt(make_pt(0, sample_height-2, 0), (thick, 0, 0)),
+                      TC: tr_pt(make_pt(1, sample_height-1, 0), (0, thick, 0))}
+
+        mesh.append((compute_normal(a_triangle), a_triangle))
+        mesh.append((compute_normal(b_triangle), b_triangle))
+        mesh.append((compute_normal(c_triangle), c_triangle))
+
+
 
     print "Generated %s triangles." % len(mesh)
     return mesh
@@ -303,7 +403,7 @@ def write_stl(outfile, mesh):
 
 
 def main():
-    dataset = gdal.Open('mto.tif', gdal.GA_ReadOnly)
+    dataset = gdal.Open('mtr-v2.tif', gdal.GA_ReadOnly)
     get_general_info(dataset)
     mesh = get_mesh(dataset)
     print "Writing STL"
