@@ -92,8 +92,8 @@ def get_mesh(dataset):
 
     pixel_size = get_pixel_meters(dataset)
     output_scalar = .0035
-    sample_scale = 100
-    thick = 5
+    sample_scale = 10
+    thick = 1
 
 
 
@@ -126,6 +126,26 @@ def get_mesh(dataset):
                 float(y) * pt_scalar[PY],
                 z)
 
+    def get_closest_vertice(x,y):
+        pt = ( int(x / pt_scalar[PX]),
+               int(y / pt_scalar[PY]))
+        return pt
+
+    def make_square(square):
+        a_triangle = {TA: square[0],
+                     TB: square[1],
+                     TC: square[2]}
+        a_normal = compute_normal(a_triangle) # 0,-1,0 ?
+
+        b_triangle = { TA: square[2],
+                      TB: square[3],
+                      TC: square[0]}
+        b_normal = compute_normal(b_triangle)
+
+        # pprint.pprint(a_normal)
+        # pprint.pprint(b_normal)
+
+        return [(a_normal, a_triangle), (b_normal, b_triangle)]
 
 
     print "Scaled space option max is:"
@@ -278,9 +298,15 @@ def get_mesh(dataset):
     def tr_pt(point, vector):
         return (point[PX] + vector[PX], point[PY] + vector[PY], point[PZ] + vector[PZ])
 
+
+    print "margin in indexes:"
+    in_margin = (int(thick / (pt_scalar[PX])) + 1,
+                 int(thick / (math.fabs(pt_scalar[PY]))) + 1)
+    pprint.pprint(in_margin)
+
     if True:
         # x side edges
-        for sy in range(1, sample_height-2):
+        for sy in range(in_margin[PY], sample_height-1-in_margin[PY]):
             a_triangle = {TA: make_pt(0, sy, 0),
                           TB: tr_pt(make_pt(0, sy, 0), (thick, 0, 0)),
                           TC: make_pt(0, sy+1, 0)}
@@ -303,7 +329,7 @@ def get_mesh(dataset):
 
 
         # y sides
-        for sx in range(1, sample_width-2):
+        for sx in range(in_margin[PX], sample_width-1-in_margin[PX]):
             a_triangle = {TA: make_pt(sx, 0, 0),
                           TB: make_pt(sx+1, 0, 0),
                           TC: tr_pt(make_pt(sx, 0, 0), (0, -thick, 0))}
@@ -326,30 +352,30 @@ def get_mesh(dataset):
 
         # corners
         #-x+y
-        a_triangle = {TA: make_pt(1, 0, 0),
-                      TB: tr_pt(make_pt(1, 0, 0), (0, -thick, 0)),
+        a_triangle = {TA: make_pt(in_margin[PX], 0, 0),
+                      TB: tr_pt(make_pt(in_margin[PX], 0, 0), (0, -thick, 0)),
                       TC: make_pt(0, 0, 0)}
-        b_triangle = {TA: make_pt(0, 1, 0),
+        b_triangle = {TA: make_pt(0, in_margin[PY], 0),
                       TB: make_pt(0, 0, 0),
-                      TC: tr_pt(make_pt(0, 1, 0), (thick, 0, 0))}
+                      TC: tr_pt(make_pt(0, in_margin[PY], 0), (thick, 0, 0))}
         c_triangle = {TA: make_pt(0, 0, 0),
-                      TB: tr_pt(make_pt(1, 0, 0), (0, -thick, 0)),
-                      TC: tr_pt(make_pt(0, 1, 0), (thick, 0, 0))}
+                      TB: tr_pt(make_pt(in_margin[PX], 0, 0), (0, -thick, 0)),
+                      TC: tr_pt(make_pt(0, in_margin[PY], 0), (thick, 0, 0))}
 
         mesh.append((compute_normal(a_triangle), a_triangle))
         mesh.append((compute_normal(b_triangle), b_triangle))
         mesh.append((compute_normal(c_triangle), c_triangle))
 
         #+x+y
-        a_triangle = {TA: make_pt(sample_width-2, 0, 0),
+        a_triangle = {TA: make_pt(sample_width-1-in_margin[PX], 0, 0),
                       TB: make_pt(sample_width-1, 0, 0),
-                      TC: tr_pt(make_pt(sample_width-2, 0, 0), (0, -thick, 0))}
+                      TC: tr_pt(make_pt(sample_width-1-in_margin[PX], 0, 0), (0, -thick, 0))}
         b_triangle = {TA: make_pt(sample_width-1, 0, 0),
-                      TB: make_pt(sample_width-1, 1, 0),
-                      TC: tr_pt(make_pt(sample_width-1, 1, 0), (-thick, 0, 0))}
+                      TB: make_pt(sample_width-1, in_margin[PY], 0),
+                      TC: tr_pt(make_pt(sample_width-1, in_margin[PY], 0), (-thick, 0, 0))}
         c_triangle = {TA: make_pt(sample_width-1, 0, 0),
-                      TB: tr_pt(make_pt(sample_width-1, 1, 0), (-thick, 0, 0)),
-                      TC: tr_pt(make_pt(sample_width-2, 0, 0), (0, -thick, 0))}
+                      TB: tr_pt(make_pt(sample_width-1, in_margin[PY], 0), (-thick, 0, 0)),
+                      TC: tr_pt(make_pt(sample_width-1-in_margin[PX], 0, 0), (0, -thick, 0))}
 
         mesh.append((compute_normal(a_triangle), a_triangle))
         mesh.append((compute_normal(b_triangle), b_triangle))
@@ -357,14 +383,14 @@ def get_mesh(dataset):
 
         #+x-y
         a_triangle = {TA: make_pt(sample_width-1, sample_height-1, 0),
-                      TB: make_pt(sample_width-2, sample_height-1, 0),
-                      TC: tr_pt(make_pt(sample_width-2, sample_height-1, 0), (0, thick, 0))}
-        b_triangle = {TA: make_pt(sample_width-1, sample_height-2, 0),
+                      TB: make_pt(sample_width-1-in_margin[PX], sample_height-1, 0),
+                      TC: tr_pt(make_pt(sample_width-1-in_margin[PX], sample_height-1, 0), (0, thick, 0))}
+        b_triangle = {TA: make_pt(sample_width-1, sample_height-1-in_margin[PY], 0),
                       TB: make_pt(sample_width-1, sample_height-1, 0),
-                      TC: tr_pt(make_pt(sample_width-1, sample_height-2, 0), (-thick, 0, 0))}
+                      TC: tr_pt(make_pt(sample_width-1, sample_height-1-in_margin[PY], 0), (-thick, 0, 0))}
         c_triangle = {TA: make_pt(sample_width-1, sample_height-1, 0),
-                      TB: tr_pt(make_pt(sample_width-2, sample_height-1, 0), (0, thick, 0)),
-                      TC: tr_pt(make_pt(sample_width-1, sample_height-2, 0), (-thick, 0, 0))}
+                      TB: tr_pt(make_pt(sample_width-1-in_margin[PX], sample_height-1, 0), (0, thick, 0)),
+                      TC: tr_pt(make_pt(sample_width-1, sample_height-1-in_margin[PY], 0), (-thick, 0, 0))}
 
         mesh.append((compute_normal(a_triangle), a_triangle))
         mesh.append((compute_normal(b_triangle), b_triangle))
@@ -372,23 +398,131 @@ def get_mesh(dataset):
 
         #-x-y
         a_triangle = {TA: make_pt(0, sample_height-1, 0),
-                      TB: make_pt(0, sample_height-2, 0),
-                      TC: tr_pt(make_pt(0, sample_height-2, 0), (thick, 0, 0))}
+                      TB: make_pt(0, sample_height-1-in_margin[PY], 0),
+                      TC: tr_pt(make_pt(0, sample_height-1-in_margin[PY], 0), (thick, 0, 0))}
         b_triangle = {TA: make_pt(0, sample_height-1, 0),
-                      TB: tr_pt(make_pt(1, sample_height-1, 0), (0, thick, 0)),
-                      TC: make_pt(1, sample_height-1, 0)}
+                      TB: tr_pt(make_pt(in_margin[PX], sample_height-1, 0), (0, thick, 0)),
+                      TC: make_pt(in_margin[PY], sample_height-1, 0)}
         c_triangle = {TA: make_pt(0, sample_height-1, 0),
-                      TB: tr_pt(make_pt(0, sample_height-2, 0), (thick, 0, 0)),
-                      TC: tr_pt(make_pt(1, sample_height-1, 0), (0, thick, 0))}
+                      TB: tr_pt(make_pt(0, sample_height-1-in_margin[PY], 0), (thick, 0, 0)),
+                      TC: tr_pt(make_pt(in_margin[PX], sample_height-1, 0), (0, thick, 0))}
 
         mesh.append((compute_normal(a_triangle), a_triangle))
         mesh.append((compute_normal(b_triangle), b_triangle))
         mesh.append((compute_normal(c_triangle), c_triangle))
 
+    # inner edges
+    if True:
+        for sy in range(in_margin[PY], sample_height-1-in_margin[PY]):
+                # -x side
+                a_triangle = {TA: tr_pt(make_pt(0, sy, 3), (thick, 0, 0)),
+                              TB: tr_pt(make_pt(0, sy, 0), (thick, 0, 0)),
+                              TC: tr_pt(make_pt(0, sy+1, 0), (thick, 0, 0))}
+                a_normal = compute_normal(a_triangle) # -1,0,0 ?
+                b_triangle = {TA: tr_pt(make_pt(0, sy+1, 3), (thick, 0, 0)),
+                              TB: tr_pt(make_pt(0, sy, 3), (thick, 0, 0)),
+                              TC: tr_pt(make_pt(0, sy+1, 0), (thick, 0, 0))}
+                b_normal = compute_normal(b_triangle)
+
+                mesh.append((a_normal, a_triangle))
+                mesh.append((b_normal, b_triangle))
+
+                if True:
+                    # +x side
+                    a_triangle = {TA: tr_pt(make_pt(sample_width-1, sy, 3), (-thick, 0, 0)),
+                                  TB: tr_pt(make_pt(sample_width-1, sy+1, 0), (-thick, 0, 0)),
+                                  TC: tr_pt(make_pt(sample_width-1, sy, 0), (-thick, 0, 0))}
+                    a_normal = compute_normal(a_triangle) # 1,0,0 ?
+                    b_triangle = {TA: tr_pt(make_pt(sample_width-1, sy+1,3), (-thick, 0, 0)),
+                                  TB: tr_pt(make_pt(sample_width-1, sy+1, 0), (-thick, 0, 0)),
+                                  TC: tr_pt(make_pt(sample_width-1, sy, 3), (-thick, 0, 0))}
+                    b_normal = compute_normal(b_triangle)
+
+                    mesh.append((a_normal, a_triangle))
+                    mesh.append((b_normal, b_triangle))
+    if True:
+        for sx in range(in_margin[PX], sample_width-1-in_margin[PX]):
+            # +y side
+            a_triangle = {TA: tr_pt(make_pt(sx, 0,3), (0, -thick, 0)),
+                          TB: tr_pt(make_pt(sx+1, 0, 0), (0, -thick, 0)),
+                          TC: tr_pt(make_pt(sx, 0, 0), (0, -thick, 0))}
+            a_normal = compute_normal(a_triangle) # 0,1,0 ?
+            b_triangle = {TA: tr_pt(make_pt(sx+1, 0,3), (0, -thick, 0)),
+                          TB: tr_pt(make_pt(sx+1, 0, 0), (0, -thick, 0)),
+                          TC: tr_pt(make_pt(sx, 0,3), (0, -thick, 0))}
+            b_normal = compute_normal(b_triangle)
+
+            mesh.append((a_normal, a_triangle))
+            mesh.append((b_normal, b_triangle))
+
+            if True:
+                # -y side
+                a_triangle = {TA: tr_pt(make_pt(sx, sample_height-1,3), (0, thick, 0)),
+                              TB: tr_pt(make_pt(sx, sample_height-1, 0), (0, thick, 0)),
+                              TC: tr_pt(make_pt(sx+1, sample_height-1, 0), (0, thick, 0))}
+                a_normal = compute_normal(a_triangle) # 0,-1,0 ?
+                b_triangle = {TA: tr_pt(make_pt(sx+1, sample_height-1,3), (0, thick, 0)),
+                              TB: tr_pt(make_pt(sx, sample_height-1,3), (0, thick, 0)),
+                              TC: tr_pt(make_pt(sx+1, sample_height-1, 0), (0, thick, 0))}
+                b_normal = compute_normal(b_triangle)
+
+                mesh.append((a_normal, a_triangle))
+                mesh.append((b_normal, b_triangle))
+
+
+    if True:
+        #inside corner caps
+        mesh.extend(make_square((tr_pt(make_pt(0, in_margin[PY], 3), (thick, 0, 0)),
+              tr_pt(make_pt(0, in_margin[PY], 0), (thick, 0, 0)),
+              tr_pt(make_pt(in_margin[PX], 0, 0), (0, -thick, 0)),
+              tr_pt(make_pt(in_margin[PX], 0, 3), (0, -thick, 0)))))
+        mesh.extend(make_square((
+            tr_pt(make_pt(sample_width-1-in_margin[PX], 0, 3), (0, -thick, 0)),
+            tr_pt(make_pt(sample_width-1-in_margin[PX], 0, 0), (0, -thick, 0)),
+            tr_pt(make_pt(sample_width-1, in_margin[PY], 0), (-thick, 0, 0)),
+            tr_pt(make_pt(sample_width-1, in_margin[PY], 3), (-thick, 0, 0)))))
+        mesh.extend(make_square((
+            tr_pt(make_pt(sample_width-1, sample_height-1-in_margin[PY], 3), (-thick, 0, 0)),
+            tr_pt(make_pt(sample_width-1, sample_height-1-in_margin[PY], 0), (-thick, 0, 0)),
+            tr_pt(make_pt(sample_width-1-in_margin[PX], sample_height-1, 0), (0, thick, 0)),
+            tr_pt(make_pt(sample_width-1-in_margin[PX], sample_height-1, 3), (0, thick, 0)))))
+        mesh.extend(make_square((
+            tr_pt(make_pt(in_margin[PX], sample_height-1, 3), (0, thick, 0)),
+            tr_pt(make_pt(in_margin[PX], sample_height-1, 0), (0, thick, 0)),
+            tr_pt(make_pt(0, sample_height-1-in_margin[PY], 0), (thick, 0, 0)),
+            tr_pt(make_pt(0, sample_height-1-in_margin[PY], 3), (thick, 0, 0)))))
+
 
 
     print "Generated %s triangles." % len(mesh)
     return mesh
+
+def get_positive(mesh):
+    base = [1,1,1]
+    thresh = [1,1,1]
+    for tx, tri in enumerate(mesh):
+        for pt in [TA, TB, TC]:
+            # print '----'
+            # print tx, tri
+            # print pt
+            # print mesh[tx][1][pt][PX]
+            # print mesh[tri][pt][PX]
+            if (mesh[tx][1][pt][PX] < thresh[PX]):
+                thresh[PX] = mesh[tx][1][pt][PX]
+            if (mesh[tx][1][pt][PY] < thresh[PY]):
+                thresh[PY] = mesh[tx][1][pt][PY]
+            if (mesh[tx][1][pt][PZ] < thresh[PZ]):
+                thresh[PZ] = mesh[tx][1][pt][PZ]
+
+    if thresh != base:
+        inc = numpy.subtract(base, thresh)
+        for tx, tri in enumerate(mesh):
+            for pt in [TA,TB,TC]:
+                mesh[tx][1][pt] = numpy.add(mesh[tx][1][pt], inc)
+
+    return mesh
+
+
 
 def write_stl(outfile, mesh):
     with open(outfile, 'wb') as dest_file:
@@ -406,6 +540,7 @@ def main():
     dataset = gdal.Open('mtr-v2.tif', gdal.GA_ReadOnly)
     get_general_info(dataset)
     mesh = get_mesh(dataset)
+    mesh = get_positive(mesh)
     print "Writing STL"
     write_stl("output.stl", mesh)
 
