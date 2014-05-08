@@ -92,8 +92,8 @@ def get_mesh(dataset):
 
     pixel_size = get_pixel_meters(dataset)
     output_scalar = .0035
-    sample_scale = 10
-    thick = 1
+    sample_scale = 50
+    thick = 2
 
 
 
@@ -125,6 +125,52 @@ def get_mesh(dataset):
         return (float(x) * pt_scalar[PX],
                 float(y) * pt_scalar[PY],
                 z)
+
+    def tr_pt(point, vector):
+        return (point[PX] + vector[PX], point[PY] + vector[PY], point[PZ] + vector[PZ])
+
+
+    def mesh_pt(x,y,translate=None):
+        if (translate is None):
+            return make_pt(x,y)
+
+        real_pt = tr_pt(make_pt(x,y), translate)
+
+        new_pt = (real_pt[0], real_pt[1], get_real_mesh_z(x,y,translate,real_pt[PX], real_pt[PY]))
+
+        return new_pt
+
+
+    def get_real_mesh_z(index_x, index_y, translate, real_target_x, real_target_y):
+        index_space_x = real_target_x / pt_scalar[PX]
+        index_space_y = real_target_y / pt_scalar[PY]
+
+        area = (make_pt(int(math.floor(index_x)), int(math.floor(index_y))),
+                make_pt(int(math.floor(index_x)), int(math.ceil(index_y))),
+                make_pt(int(math.ceil(index_x)), int(math.ceil(index_y))),
+                make_pt(int(math.ceil(index_x)), int(math.floor(index_y))))
+
+        real_z = 0
+        if pt_in_triangle((index_space_x, index_space_y), area[0], area[1], area[2]):
+            real_z = find_pt_height((index_space_x, index_space_y), area[0],area[1], area[2])
+        else :
+            real_z = find_pt_height((index_space_x, index_space_y),area[0],area[2], area[3])
+
+        return real_z
+
+    def pt_in_triangle(pt, a, b, c):
+        return same_side(pt, a, b,c) and same_side(pt, b, a, c) and same_side(pt, c, a, b)
+
+    def same_side(p1, p2, a, b):
+        cp1 = numpy.cross(numpy.subtract(b[:2],a[:2]), numpy.subtract(p1[:2], a[:2]))
+        cp2 = numpy.cross(numpy.subtract(b[:2],a[:2]), numpy.subtract(p2[:2], a[:2]))
+        return numpy.dot(cp1, cp2) >= 0
+
+    def find_pt_height(pt, a, b, c):
+        n = compute_normal({TA:a, TB:b, TC:c})
+        h = -(pt[PX] - a[PX]) - (pt[PY] - a[PY]) + a[PZ]
+        return h
+
 
     def get_closest_vertice(x,y):
         pt = ( int(x / pt_scalar[PX]),
@@ -295,8 +341,6 @@ def get_mesh(dataset):
 
     # hollow base
 
-    def tr_pt(point, vector):
-        return (point[PX] + vector[PX], point[PY] + vector[PY], point[PZ] + vector[PZ])
 
 
     print "margin in indexes:"
@@ -412,7 +456,7 @@ def get_mesh(dataset):
         mesh.append((compute_normal(c_triangle), c_triangle))
 
     # inner edges
-    if True:
+    if False:
         for sy in range(in_margin[PY], sample_height-1-in_margin[PY]):
                 # -x side
                 a_triangle = {TA: tr_pt(make_pt(0, sy, 3), (thick, 0, 0)),
@@ -440,7 +484,7 @@ def get_mesh(dataset):
 
                     mesh.append((a_normal, a_triangle))
                     mesh.append((b_normal, b_triangle))
-    if True:
+    if False:
         for sx in range(in_margin[PX], sample_width-1-in_margin[PX]):
             # +y side
             a_triangle = {TA: tr_pt(make_pt(sx, 0,3), (0, -thick, 0)),
@@ -493,6 +537,42 @@ def get_mesh(dataset):
             tr_pt(make_pt(0, sample_height-1-in_margin[PY], 3), (thick, 0, 0)))))
 
 
+    if True:
+        # generate a inner mesh
+        for sy in range(in_margin[PY], sample_height-1-in_margin[PY]):
+            for sx in range(in_margin[PX], sample_width-1-in_margin[PX]):
+                mesh.extend(make_square((
+                    tr_pt(make_pt(sx, sy), (0, 0, -thick)),
+                    tr_pt(make_pt(sx+1, sy), (0, 0, -thick)),
+                    tr_pt(make_pt(sx+1, sy+1), (0, 0, -thick)),
+                    tr_pt(make_pt(sx, sy+1), (0, 0, -thick)))))
+
+    # XXX this isn't going to work, it's going to make the top layer too thick.
+    
+    if True:
+        for sy in range(in_margin[PY], sample_height-1-in_margin[PY]):
+            mesh.extend(make_square((
+                tr_pt(make_pt(0, sy), (thick, 0, -thick)),
+                tr_pt(make_pt(in_margin[PX], sy), (0, 0, -thick)),
+                tr_pt(make_pt(in_margin[PX], sy+1), (0, 0, -thick)),
+                tr_pt(make_pt(0, sy+1), (thick, 0, -thick)))))
+            mesh.extend(make_square((
+                tr_pt(make_pt(sample_width-1-in_margin[PX], sy), (0, 0, -thick)),
+                tr_pt(make_pt(sample_width-1, sy), (-thick, 0, -thick)),
+                tr_pt(make_pt(sample_width-1, sy+1), (-thick, 0, -thick)),
+                tr_pt(make_pt(sample_width-1-in_margin[PX], sy+1), (0, 0, -thick)))))
+
+        for sx in range(in_margin[PX], sample_width-1-in_margin[PX]):
+            mesh.extend(make_square((
+                tr_pt(make_pt(sx, 0), (0, -thick, -thick)),
+                tr_pt(make_pt(sx+1, 0), (0, -thick, -thick)),
+                tr_pt(make_pt(sx+1, in_margin[PY]), (0, 0, -thick)),
+                tr_pt(make_pt(sx, in_margin[PY]), (0, 0, -thick)))))
+            mesh.extend(make_square((
+                tr_pt(make_pt(sx, sample_height-1), (0, thick, -thick)),
+                tr_pt(make_pt(sx+1, sample_height-1), (0, thick, -thick)),
+                tr_pt(make_pt(sx+1, sample_height-1-in_margin[PY]), (0, 0, -thick)),
+                tr_pt(make_pt(sx, sample_height-1-in_margin[PY]), (0, 0, -thick)))))
 
     print "Generated %s triangles." % len(mesh)
     return mesh
@@ -540,7 +620,7 @@ def main():
     dataset = gdal.Open('mtr-v2.tif', gdal.GA_ReadOnly)
     get_general_info(dataset)
     mesh = get_mesh(dataset)
-    mesh = get_positive(mesh)
+    # mesh = get_positive(mesh)
     print "Writing STL"
     write_stl("output.stl", mesh)
 
