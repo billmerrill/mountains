@@ -25,7 +25,7 @@ def get_pixel_meters(dataset):
 def make_point(x,y,z):
     return (x,y,z)
 
-def sample_elevation(build_config, dataset):
+def sample_mesh_in_meters(build_config, dataset):
     sample_rate = build_config['sample_rate']
     band = dataset.GetRasterBand(1)
 
