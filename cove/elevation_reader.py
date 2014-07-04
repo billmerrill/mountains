@@ -7,6 +7,7 @@ from indicies import *
 from mesh import Mesh
 
 def get_pixel_meters(dataset):
+    ''' get the length in meters of each pixel, x and y '''
     geotransform = dataset.GetGeoTransform()
     x_size_deg = geotransform[1]
     y_size_deg = geotransform[5]
@@ -23,9 +24,12 @@ def get_pixel_meters(dataset):
 
 
 def make_point(x,y,z):
-    return (x,y,z)
-
+    ''' maybe we'll do something more interesting here '''
+    return [x,y,z]
+    
 def sample_mesh_in_meters(build_config, dataset):
+    ''' generates a mesh with points scaled to meters of lat, lon, and elevation
+        based on the elevation unit in the input, meters to start '''
     sample_rate = build_config['sample_rate']
     band = dataset.GetRasterBand(1)
 
@@ -48,3 +52,20 @@ def sample_mesh_in_meters(build_config, dataset):
         elevation_mesh.add_row(points)
         
     return elevation_mesh
+    
+    
+def scale_mesh_to_output(build_config, in_mesh):
+    x_data_max = in_mesh.get_data_x_size()
+    y_data_max = in_mesh.get_data_y_size()
+    
+    output_x = build_config.get('x_output_max', None)
+    
+    output_ratio = output_x / x_data_max
+    
+    scaled_mesh = Mesh()
+    scaled_mesh.copy(in_mesh, 
+                     scalar=[output_ratio, output_ratio, output_ratio], 
+                     translate=[0,0,0])
+   
+    return scaled_mesh
+    
