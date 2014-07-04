@@ -92,7 +92,7 @@ def get_mesh(dataset):
 
     pixel_size = get_pixel_meters(dataset)
     output_scalar = .0035
-    sample_scale = 50
+    sample_scale = 10
     thick = 2
 
 
@@ -194,11 +194,11 @@ def get_mesh(dataset):
         return [(a_normal, a_triangle), (b_normal, b_triangle)]
 
 
-    print "Scaled space option max is:"
+    print "Scaled space max is:"
     pprint.pprint(make_pt(sample_width-1, sample_height-1, 0))
 
     # generate a mountain mesh
-    if False:
+    if True:
         for sy in range(0, sample_height-1):
             for sx in range(0, sample_width-1):
                 a_triangle = {TA:make_pt(sx,sy),
@@ -276,7 +276,7 @@ def get_mesh(dataset):
 
     # solid base
 
-    if False:
+    if True:
         yhalf = sample_height / 2
         xhalf = sample_width / 2
         yquarter = sample_height / 4
@@ -348,7 +348,7 @@ def get_mesh(dataset):
                  int(thick / (math.fabs(pt_scalar[PY]))) + 1)
     pprint.pprint(in_margin)
 
-    if True:
+    if False:
         # x side edges
         for sy in range(in_margin[PY], sample_height-1-in_margin[PY]):
             a_triangle = {TA: make_pt(0, sy, 0),
@@ -514,7 +514,7 @@ def get_mesh(dataset):
                 mesh.append((b_normal, b_triangle))
 
 
-    if True:
+    if False:
         #inside corner caps
         mesh.extend(make_square((tr_pt(make_pt(0, in_margin[PY], 3), (thick, 0, 0)),
               tr_pt(make_pt(0, in_margin[PY], 0), (thick, 0, 0)),
@@ -537,7 +537,7 @@ def get_mesh(dataset):
             tr_pt(make_pt(0, sample_height-1-in_margin[PY], 3), (thick, 0, 0)))))
 
 
-    if True:
+    if False:
         # generate a inner mesh
         for sy in range(in_margin[PY], sample_height-1-in_margin[PY]):
             for sx in range(in_margin[PX], sample_width-1-in_margin[PX]):
@@ -548,8 +548,8 @@ def get_mesh(dataset):
                     tr_pt(make_pt(sx, sy+1), (0, 0, -thick)))))
 
     # XXX this isn't going to work, it's going to make the top layer too thick.
-    
-    if True:
+
+    if False:
         for sy in range(in_margin[PY], sample_height-1-in_margin[PY]):
             mesh.extend(make_square((
                 tr_pt(make_pt(0, sy), (thick, 0, -thick)),
@@ -617,10 +617,10 @@ def write_stl(outfile, mesh):
 
 
 def main():
-    dataset = gdal.Open('mtr-v2.tif', gdal.GA_ReadOnly)
+    dataset = gdal.Open('mtr-sq.tif', gdal.GA_ReadOnly)
     get_general_info(dataset)
     mesh = get_mesh(dataset)
-    # mesh = get_positive(mesh)
+    mesh = get_positive(mesh)
     print "Writing STL"
     write_stl("output.stl", mesh)
 
