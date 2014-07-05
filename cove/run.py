@@ -3,6 +3,7 @@ import gdal
 from geohelpers import get_general_info
 from elevation_reader import sample_mesh_in_meters, scale_mesh_to_output
 from mesh import Mesh
+from stl_canvas import STLCanvas
 
 
 build_config = { 'src': 'mtr-sq.tif',
@@ -18,6 +19,11 @@ def build(dataset):
     
     print elevation_mesh_meters.get_max_corner()
     print elevation_mesh_output_scaled.get_max_corner()
+    
+    canvas = STLCanvas()
+    canvas.add_mesh(elevation_mesh_meters)
+    #canvas.add_mesh(elevation_mesh_output_scaled)
+    canvas.write_stl("cove_out.stl")
     
 def main():
     dataset = gdal.Open(build_config['src'], gdal.GA_ReadOnly)

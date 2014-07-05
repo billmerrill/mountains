@@ -48,7 +48,7 @@ def sample_mesh_in_meters(build_config, dataset):
         for j in range(0, sample_xsize):
             points.append( make_point(sample_rate * pixel_meters[PX] * j,
                                     sample_rate * pixel_meters[PY] * i,
-                                    elevations[j] ))
+                                    elevations[j * sample_rate] ))
         elevation_mesh.add_row(points)
         
     return elevation_mesh
