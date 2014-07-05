@@ -47,4 +47,4 @@ class Mesh:
                                      self.mesh[sy][sx][PY] * scalar[PY] + translate[PY],
                                      self.mesh[sy][sx][PZ] * scalar[PZ] + translate[PZ]]
 
-        
+        return self

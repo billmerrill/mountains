@@ -15,21 +15,14 @@ build_config = { 'src': 'mtr-sq.tif',
 def build(dataset):
     
     elevation_mesh_meters = sample_mesh_in_meters(build_config, dataset)
-    elevation_mesh_output_scaled = scale_mesh_to_output(build_config, elevation_mesh_meters)
+    top = scale_mesh_to_output(build_config, elevation_mesh_meters)
     
-    top = elevation_mesh_output_scaled
     bottom = Mesh()
-    bottom.copy(top, scalar=[1,1,1], translate=[0,0,-20])
-    
-    print elevation_mesh_meters.get_max_corner()
-    print elevation_mesh_output_scaled.get_max_corner()
-    
-    
-
+    bottom.copy(top, scalar=[1,1,1], translate=[0,0,-50])
     
     canvas = STLCanvas()
     canvas.add_mesh(top)
-    # canvas.add_mesh(bottom)
+    canvas.add_mesh(bottom)
     canvas.write_stl("cove_out.stl")
     
 def main():
