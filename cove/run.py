@@ -21,8 +21,9 @@ def build(dataset):
     bottom.copy(top, scalar=[1,1,1], translate=[0,0,-50])
     
     canvas = STLCanvas()
-    canvas.add_mesh(top)
-    canvas.add_mesh(bottom)
+    # canvas.add_mesh(top)
+    # canvas.add_mesh(bottom)
+    canvas.add_mesh_sandwich(top, bottom)
     canvas.write_stl("cove_out.stl")
     
 def main():

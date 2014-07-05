@@ -48,3 +48,4 @@ class Mesh:
                                      self.mesh[sy][sx][PZ] * scalar[PZ] + translate[PZ]]
 
         return self
+    
