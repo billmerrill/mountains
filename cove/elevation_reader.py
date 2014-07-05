@@ -65,7 +65,7 @@ def scale_mesh_to_output(build_config, in_mesh):
     scaled_mesh = Mesh()
     scaled_mesh.copy(in_mesh, 
                      scalar=[output_ratio, output_ratio, output_ratio], 
-                     translate=[0,0,-100])
+                     translate=[0,0,0])
    
     return scaled_mesh
     

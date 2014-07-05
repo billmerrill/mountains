@@ -26,17 +26,7 @@ class Mesh:
         self.xsize = src.xsize
         self.ysize = src.ysize
         self.mesh = copy.deepcopy(src.mesh)
-        
-        for i,rows in enumerate(self.mesh):
-            for j,pixs in enumerate(self.mesh[i]):
-                self.mesh[i][j] = [src.mesh[i][j][PX] * scalar[PX] + translate[PX],
-                                   src.mesh[i][j][PY] * scalar[PX] + translate[PY],
-                                   src.mesh[i][j][PZ] * scalar[PX] + translate[PZ]]
-        for sy in range(0, self.y_max()):
-            for sx in range(0, self.x_max()):
-                self.mesh[sy][sx] = [src.mesh[sy][sx][PX] * scalar[PX] + translate[PX],
-                                     src.mesh[sy][sx][PY] * scalar[PX] + translate[PY],
-                                     src.mesh[sy][sx][PZ] * scalar[PX] + translate[PZ]]
+        self.transform(scalar, translate)
                                    
     def get_data_x_size(self):
         return self.mesh[0][self.x_max()][PX] - self.mesh[0][0][PX]
@@ -49,3 +39,12 @@ class Mesh:
     
     def get(self, x, y):
         return self.mesh[y][x]
+        
+    def transform(self, scalar, translate):
+        for sy in range(0, self.ysize):
+            for sx in range(0, self.xsize):
+                self.mesh[sy][sx] = [self.mesh[sy][sx][PX] * scalar[PX] + translate[PX],
+                                     self.mesh[sy][sx][PY] * scalar[PY] + translate[PY],
+                                     self.mesh[sy][sx][PZ] * scalar[PZ] + translate[PZ]]
+
+        
