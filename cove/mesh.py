@@ -13,6 +13,7 @@ class Mesh:
         
     def x_max(self):
         return self.xsize-1
+        
     def y_max(self):
         return self.ysize-1
         
@@ -51,4 +52,12 @@ class Mesh:
     
     def get_pixel_size(self):
         return [self.mesh[0][1]-self.mesh[0][0], self.mesh[1][0] - self.mesh[0][0]]
+
+class ConstantMesh(Mesh):
+    def __init__(self, constant, xsize, ysize):
+        Mesh.__init__(self, xsize, ysize)
+        
+        self.constant = constant
     
+    def get(self, x, y):    
+        return [x, y, self.constant]

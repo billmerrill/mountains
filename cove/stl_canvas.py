@@ -24,7 +24,7 @@ class STLCanvas:
         else:
             self.add_triangle([square[0], square[3], square[1]])
             self.add_triangle([square[0], square[2], square[3]])
-        
+            
     def add_mesh(self, mesh, invert_normal = False):
         for sy in range(0, mesh.y_max()):
             for sx in range(0, mesh.x_max()):
@@ -71,7 +71,8 @@ class STLCanvas:
                              s1.get(sx+1, s1.y_max()),
                              s2.get(sx, s2.y_max()),
                              s2.get(sx+1, s2.y_max())])
-    
+                             
+        
     def write_stl(self, outfile):
         with open(outfile, 'wb') as dest_file:
             dest_file.write(struct.pack("80sI", b'Quick Release Lever', len(self.triangles)))

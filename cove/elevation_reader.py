@@ -30,7 +30,7 @@ def make_point(x,y,z):
 def sample_mesh_in_meters(build_config, dataset):
     ''' generates a mesh with points scaled to meters of lat, lon, and elevation
         based on the elevation unit in the input, meters to start '''
-    sample_rate = build_config['sample_rate']
+    sample_rate = build_config.sample_rate
     band = dataset.GetRasterBand(1)
 
     sample_ysize = dataset.RasterYSize / sample_rate 
@@ -39,6 +39,11 @@ def sample_mesh_in_meters(build_config, dataset):
     pixel_meters = get_pixel_meters(dataset)
     
     elevation_mesh = Mesh(sample_xsize, sample_ysize)
+    
+    build_config.set_scale_factor([sample_rate * pixel_meters[PX],
+                                  sample_rate * pixel_meters[PY],
+                                  1])
+    
     
     for i in range(0, sample_ysize):
         scanline = band.ReadRaster(0, i * sample_rate, band.XSize, 1,
@@ -58,7 +63,7 @@ def scale_mesh_to_output(build_config, in_mesh):
     x_data_max = in_mesh.get_data_x_size()
     y_data_max = in_mesh.get_data_y_size()
     
-    output_x = build_config.get('x_output_max', None)
+    output_x = build_config.x_output_max
     
     output_ratio = output_x / x_data_max
     
@@ -70,7 +75,7 @@ def scale_mesh_to_output(build_config, in_mesh):
     return scaled_mesh
     
 def make_mesh_bottom(build_config, in_mesh):
-    thick = build_config['wall_thickness']
+    thick = build_config.wall_thickness
     bottom = Mesh()
     bottom.copy(in_mesh)
     pixel_size = bottom.get_pixel_size()
