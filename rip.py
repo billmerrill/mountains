@@ -91,8 +91,9 @@ def get_mesh(dataset):
 
 
     pixel_size = get_pixel_meters(dataset)
+    print("Pixel size is %s x %s " % (pixel_size[PX], pixel_size[PY]))
     output_scalar = .0035
-    sample_scale = 10
+    sample_scale = 4 
     thick = 2
 
 

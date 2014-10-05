@@ -69,3 +69,12 @@ def scale_mesh_to_output(build_config, in_mesh):
    
     return scaled_mesh
     
+def make_mesh_bottom(build_config, in_mesh):
+    thick = build_config['wall_thickness']
+    bottom = Mesh()
+    bottom.copy(in_mesh)
+    pixel_size = bottom.get_pixel_size()
+    
+    
+    
+    

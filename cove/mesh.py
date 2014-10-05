@@ -49,3 +49,6 @@ class Mesh:
 
         return self
     
+    def get_pixel_size(self):
+        return [self.mesh[0][1]-self.mesh[0][0], self.mesh[1][0] - self.mesh[0][0]]
+    
