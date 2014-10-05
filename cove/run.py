@@ -5,6 +5,7 @@ from elevation_reader import sample_mesh_in_meters, scale_mesh_to_output
 from mesh import Mesh, ConstantMesh
 from stl_canvas import STLCanvas
 from builder import Builder
+from indicies import *
 
 
 # build_config = { 'src': 'mtr-sq.tif',
@@ -40,7 +41,12 @@ def build(dataset):
     '''
     elevation_mesh_meters = sample_mesh_in_meters(build_config, dataset)
     top = scale_mesh_to_output(build_config, elevation_mesh_meters)
-    bottom = ConstantMesh(1, elevation_mesh_meters.xsize, elevation_mesh_meters.ysize)
+    bottom = ConstantMesh(1, 
+                            elevation_mesh_meters.xsize, 
+                            elevation_mesh_meters.ysize, 
+                            build_config.input_scale_factor[PX],
+                            build_config.input_scale_factor[PY], 
+                            build_config.output_scalar)
     
     # bottom = Mesh()
     # tr_thick = build_config['wall_thickness'] * -1
@@ -48,9 +54,9 @@ def build(dataset):
     
     
     canvas = STLCanvas()
-    canvas.add_mesh(top)
-    canvas.add_mesh(bottom)
-    # canvas.add_mesh_sandwich(top, bottom)
+    # canvas.add_mesh(top)
+    # canvas.add_mesh(bottom)
+    canvas.add_mesh_sandwich(top, bottom)
     
     canvas.write_stl("cove_out.stl")
     

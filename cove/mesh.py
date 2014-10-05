@@ -54,10 +54,13 @@ class Mesh:
         return [self.mesh[0][1]-self.mesh[0][0], self.mesh[1][0] - self.mesh[0][0]]
 
 class ConstantMesh(Mesh):
-    def __init__(self, constant, xsize, ysize):
+    def __init__(self, constant, xsize, ysize, xscale, yscale, output_scalar):
         Mesh.__init__(self, xsize, ysize)
+        self.xscale = xscale * output_scalar
+        self.yscale = yscale * output_scalar
+        
         
         self.constant = constant
     
     def get(self, x, y):    
-        return [x, y, self.constant]
+        return [x * self.xscale, y * self.yscale, self.constant]

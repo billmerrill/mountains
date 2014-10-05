@@ -40,9 +40,9 @@ def sample_mesh_in_meters(build_config, dataset):
     
     elevation_mesh = Mesh(sample_xsize, sample_ysize)
     
-    build_config.set_scale_factor([sample_rate * pixel_meters[PX],
+    build_config.input_scale_factor = [sample_rate * pixel_meters[PX],
                                   sample_rate * pixel_meters[PY],
-                                  1])
+                                  1]
     
     
     for i in range(0, sample_ysize):
@@ -66,6 +66,7 @@ def scale_mesh_to_output(build_config, in_mesh):
     output_x = build_config.x_output_max
     
     output_ratio = output_x / x_data_max
+    build_config.output_scalar = output_ratio
     
     scaled_mesh = Mesh()
     scaled_mesh.copy(in_mesh, 
