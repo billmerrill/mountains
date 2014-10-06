@@ -35,9 +35,7 @@ def build(dataset):
     
     To make a terrain block:
     ========================
-    top = scale_mesh_to_output(build_config, elevation_mesh_meters)
-    canvas = STLCanvas()
-    canvas.add_terrain_block(top)
+    Make a sandwich with a flat plane mesh
     '''
     elevation_mesh_meters = sample_mesh_in_meters(build_config, dataset)
     top = scale_mesh_to_output(build_config, elevation_mesh_meters)

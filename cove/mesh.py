@@ -64,3 +64,5 @@ class ConstantMesh(Mesh):
     
     def get(self, x, y):    
         return [x * self.xscale, y * self.yscale, self.constant]
+        
+        
