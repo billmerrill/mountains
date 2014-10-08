@@ -52,17 +52,35 @@ class Mesh:
     
     def get_pixel_size(self):
         return [self.mesh[0][1]-self.mesh[0][0], self.mesh[1][0] - self.mesh[0][0]]
+        
+    def load_matrix(self, src):
+        '''
+        src: a 2 dimensional python array
+        '''
+        self.mesh = copy.deepcopy(src)
+        self.ysize = len(src)
+        self.xsize = len(src[0])
+        
+    def scale_to_output_size(self, output_size_x):
+        output_ratio = output_size_x / self.get_data_x_size()
+        self.transform([output_ratio, output_ratio, output_ratio], [0,0,0])
+                
 
-class ConstantMesh(Mesh):
-    def __init__(self, constant, xsize, ysize, xscale, yscale, output_scalar):
-        Mesh.__init__(self, xsize, ysize)
-        self.xscale = xscale * output_scalar
-        self.yscale = yscale * output_scalar
-        
-        
-        self.constant = constant
+class HorizontalPointPlane(object):
     
-    def get(self, x, y):    
-        return [x * self.xscale, y * self.yscale, self.constant]
+    def __init__(self, src_mesh, elevation):
+        self.src_mesh = src_mesh
+        self.elevation = elevation
+        self.xsize = src_mesh.xsize
+        self.ysize = src_mesh.ysize
         
+    def get(self, x, y):
+        orig = self.src_mesh.get(x,y)
+        return [orig[PX], orig[PY], self.elevation]        
+        
+    def x_max(self):
+        return self.xsize-1
+        
+    def y_max(self):
+        return self.ysize-1
         

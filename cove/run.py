@@ -1,66 +1,34 @@
 import pprint
 import gdal
 from geohelpers import get_general_info
-from elevation_reader import sample_mesh_in_meters, scale_mesh_to_output
-from mesh import Mesh, ConstantMesh
+from mesh import Mesh, HorizontalPointPlane
 from stl_canvas import STLCanvas
 from builder import Builder
+from elevation import Elevation
 from indicies import *
 
 
-# build_config = { 'src': 'mtr-sq.tif',
-#                  'sample_rate': 10,
-#                  'x_output_max': 600,
-#                  'wall_thickness': 5 #mm
-#                  }
+build_config = { 'src': 'mtr-sq.tif',
+                 'sample_rate': 10,
+                 'output_size_x': 600,
+                 'wall_thickness': 5 #mm
+                 }
 
-build_config = Builder( src =  'mtr-sq.tif',
-                        sample_rate = 10,
-                        x_output_max = 600,
-                        wall_thickness = 5)
-
-
-
-
-def build(dataset):
-    '''
-    To make a solid terrain mesh of uniform thickness:
-    ==================================================
+def main():
+    builder = Builder(build_config)
     
-    top = scale_mesh_to_output(build_config, elevation_mesh_meters)
-    bottom = Mesh()
-    tr_thick = build_config['wall_thickness'] * -1
-    bottom.copy(top, scalar=[1,1,1], translate=[0,0,tr_thick])
-    canvas.add_mesh_sandwich(top, bottom)
+    elevation = Elevation(builder)
+    elevation.load_dataset()
+    elevation.display_summary()
     
-    To make a terrain block:
-    ========================
-    Make a sandwich with a flat plane mesh
-    '''
-    elevation_mesh_meters = sample_mesh_in_meters(build_config, dataset)
-    top = scale_mesh_to_output(build_config, elevation_mesh_meters)
-    bottom = ConstantMesh(1, 
-                            elevation_mesh_meters.xsize, 
-                            elevation_mesh_meters.ysize, 
-                            build_config.input_scale_factor[PX],
-                            build_config.input_scale_factor[PY], 
-                            build_config.output_scalar)
-    
-    # bottom = Mesh()
-    # tr_thick = build_config['wall_thickness'] * -1
-    # bottom.copy(top, scalar=[1,1,1], translate=[0,0,tr_thick])
-    
+    top = Mesh(builder, elevation)
+    top.load_matrix(elevation.get_elevation_in_meters()) 
+    top.scale_to_output_size(builder.output_size_x)
+
+    bottom = HorizontalPointPlane(top, 1)
     
     canvas = STLCanvas()
-    # canvas.add_mesh(top)
-    # canvas.add_mesh(bottom)
     canvas.add_mesh_sandwich(top, bottom)
     
-    canvas.write_stl("cove_out.stl")
-    
-def main():
-    dataset = gdal.Open(build_config.src, gdal.GA_ReadOnly)
-    get_general_info(dataset)
-    build(dataset)
     
 main()
