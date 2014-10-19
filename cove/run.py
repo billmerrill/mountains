@@ -11,6 +11,7 @@ from indicies import *
 build_config = { 'src': 'mtr-sq.tif',
                  'sample_rate': 10,
                  'output_size_x': 600,
+                 'resize_ratio': [0.1, 0.1],
                  'wall_thickness': 5 #mm
                  }
 
@@ -22,13 +23,15 @@ def main():
     elevation.display_summary()
     
     top = Mesh(builder, elevation)
-    top.load_matrix(elevation.get_elevation_in_meters()) 
+    #top.load_matrix(elevation.get_elevation_in_meters()) 
+    top.load_matrix(elevation.get_elevation_in_meters_with_gdal_resample()) 
     top.scale_to_output_size(builder.output_size_x)
 
     bottom = HorizontalPointPlane(top, 1)
     
     canvas = STLCanvas()
     canvas.add_mesh_sandwich(top, bottom)
+    canvas.write_stl("cove_output.stl")
     
     
 main()

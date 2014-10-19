@@ -9,9 +9,13 @@ class Builder(object):
         self.wall_thickness = kwargs['wall_thickness']
         self.input_scale_vector = [1,1,1]
         self.output_scalar = 1
+        self.resize_ratio = kwargs['resize_ratio']
         
     def get_src_file(self):
         return self.src
         
     def get_input_sample_rate(self):
         return self.sample_rate
+        
+    def get_resize_ratio(self):
+        return self.resize_ratio

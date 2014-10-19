@@ -22,6 +22,11 @@ class Elevation(object):
         x_size_m = haversine((0,0),(x_size_deg, 0)) * 1000
         y_size_m = haversine((0,0), (0, y_size_deg)) * 1000
         return (math.copysign(x_size_m, x_size_deg), math.copysign(y_size_m, y_size_deg))
+        
+    def compute_pixel_meters(self, x_size_deg, y_size_deg):
+        x_size_m = haversine((0,0),(x_size_deg, 0)) * 1000
+        y_size_m = haversine((0,0), (0, y_size_deg)) * 1000
+        return (math.copysign(x_size_m, x_size_deg), math.copysign(y_size_m, y_size_deg))
 
         
     def get_elevation_in_meters(self):
@@ -44,7 +49,47 @@ class Elevation(object):
             elevation_matrix.append(points)    
             
         return elevation_matrix
+
+    def get_elevation_in_meters_with_gdal_resample(self):
+        sample_rate = self.builder.get_input_sample_rate()
+        resize_ratio = self.builder.get_resize_ratio()
     
+        src_xform = self.dataset.GetGeoTransform()
+        src_datatype = self.dataset.GetRasterBand(1).DataType
+        
+        dst_dim = [int(self.dataset.RasterYSize * resize_ratio[PX]),
+                   int(self.dataset.RasterXSize * resize_ratio[PY])]
+        dst_pixel_spacing = [src_xform[1] / resize_ratio[PX], 
+                             src_xform[5] / resize_ratio[PY] ]           
+
+        mem_driver = gdal.GetDriverByName('MEM')            
+        dst = mem_driver.Create('', dst_dim[PX], dst_dim[PY], 1, src_datatype)
+        dst_xform = (src_xform[0],
+                     dst_pixel_spacing[PX],
+                     src_xform[2],
+                     src_xform[3],
+                     src_xform[4],
+                     dst_pixel_spacing[PY])
+        dst.SetProjection(self.dataset.GetProjection())
+        dst.SetGeoTransform(dst_xform)
+        res = gdal.ReprojectImage(self.dataset, dst, self.dataset.GetProjection(), 
+                dst.GetProjection(), gdal.GRA_Bilinear)
+        scaled_data = dst.ReadAsArray()
+        elevation_matrix = []
+        
+        scaled_pixel_meters = self.compute_pixel_meters(dst_xform[1], dst_xform[5])
+        for i in range(0, dst_dim[PY]):
+            points = []
+            for j in range(0, dst_dim[PX]):
+                points.append ( [scaled_pixel_meters[PX] * j,
+                                 scaled_pixel_meters[PY] * i,
+                                 scaled_data[i][j]])
+            elevation_matrix.append(points)
+        
+        dst = None
+        return elevation_matrix
+                
+        
     
     def display_summary(self):
         print 'Driver: ',self.dataset.GetDriver().ShortName,'/', \
