@@ -1,8 +1,8 @@
 import gdal
 
 scalar = 2
-dataset_file = "mto.tif"
-# dataset_file = "mtr-sq.tif"
+# dataset_file = "mto.tif"
+dataset_file = "mtr-sq.tif"
 dst_filename = "scaled-image.tif"
 
 src = gdal.Open ( dataset_file )
@@ -12,8 +12,8 @@ src_datatype = src.GetRasterBand(1).DataType
 dst_dim = [int(src.RasterXSize/scalar), int(src.RasterYSize/scalar)]
 dst_pixel_spacing = [ src_geoxform[1] * scalar, src_geoxform[5]* scalar]
 
-mem_driver = gdal.GetDriverByName( 'MEM' )
-dst = mem_driver.Create('', dst_dim[0], dst_dim[1],
+mem_driver = gdal.GetDriverByName( 'GTiff' )
+dst = mem_driver.Create(dst_filename, dst_dim[0], dst_dim[1],
      1, src_datatype)
 
 dst_geoxform = (src_geoxform[0], #ulx
@@ -23,17 +23,17 @@ dst_geoxform = (src_geoxform[0], #ulx
                  src_geoxform[4],
                  dst_pixel_spacing[1])
                  
-dst.SetGeoTransform(dst_geoxform)
 dst.SetProjection(src.GetProjection())
+dst.SetGeoTransform(dst_geoxform)
 res = gdal.ReprojectImage(src , dst,
             src.GetProjection(), 
             dst.GetProjection(), 
             gdal.GRA_Bilinear)
 
-gtiff_driver = gdal.GetDriverByName('GTiff')
-output_file = gtiff_driver.CreateCopy(dst_filename, dst)
-output_file.SetGeoTransform(dst_geoxform)
-output_file.SetProjection(dst.GetProjection())
+#gtiff_driver = gdal.GetDriverByName('GTiff')
+#output_file = gtiff_driver.CreateCopy(dst_filename, dst)
+#output_file.SetGeoTransform(dst_geoxform)
+#output_file.SetProjection(dst.GetProjection())
 
 src = None
 dst = None
