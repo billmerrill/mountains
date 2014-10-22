@@ -15,7 +15,7 @@ build_config = { 'src': 'mtr-sq.tif',
                  'wall_thickness': 5 #mm
                  }
 
-def main():
+def build_solid_model():
     builder = Builder(build_config)
     
     elevation = Elevation(builder)
@@ -32,6 +32,6 @@ def main():
     canvas = STLCanvas()
     canvas.add_mesh_sandwich(top, bottom)
     canvas.write_stl("cove_output.stl")
-    
+
     
 main()

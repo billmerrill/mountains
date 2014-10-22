@@ -10,6 +10,7 @@ class Builder(object):
         self.input_scale_vector = [1,1,1]
         self.output_scalar = 1
         self.resize_ratio = kwargs['resize_ratio']
+        self.output_file_name = kwargs['output_file_name']
         
     def get_src_file(self):
         return self.src
@@ -19,3 +20,6 @@ class Builder(object):
         
     def get_resize_ratio(self):
         return self.resize_ratio
+        
+    def get_output_file_name(self):
+        return self.output_file_name

@@ -13,7 +13,10 @@ class Elevation(object):
         
     def load_dataset(self):
         self.dataset = gdal.Open(self.builder.get_src_file(), gdal.GA_ReadOnly)
-        
+       
+   def close_dataset(self):
+       self.dataset = None
+            
     def get_pixel_meters(self):
         ''' get the length in meters of each pixel, x and y '''
         geotransform = self.dataset.GetGeoTransform()
