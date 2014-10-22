@@ -12,9 +12,9 @@ class Elevation(object):
         self.builder = config
         
     def load_dataset(self):
-        self.dataset = gdal.Open(self.builder.get_src_file(), gdal.GA_ReadOnly)
+        self.dataset = gdal.Open(self.builder.get_src_filename(), gdal.GA_ReadOnly)
        
-   def close_dataset(self):
+    def close_dataset(self):
        self.dataset = None
             
     def get_pixel_meters(self):
@@ -53,9 +53,16 @@ class Elevation(object):
             
         return elevation_matrix
 
+    def get_longest_raster_size(self):
+        return max(self.dataset.RasterXSize, self.dataset.RasterYSize)
+        
     def get_elevation_in_meters_with_gdal_resample(self):
-        sample_rate = self.builder.get_input_sample_rate()
-        resize_ratio = self.builder.get_resize_ratio()
+        longest = self.get_longest_raster_size()
+        print("longest ", longest)
+        resize_ratio = self.builder.get_resize_ratio(self.get_longest_raster_size())
+    
+        pprint.pprint("new resize ration")
+        pprint.pprint(resize_ratio)
     
         src_xform = self.dataset.GetGeoTransform()
         src_datatype = self.dataset.GetRasterBand(1).DataType

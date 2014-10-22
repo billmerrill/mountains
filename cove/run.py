@@ -6,13 +6,11 @@ from stl_canvas import STLCanvas
 from builder import Builder
 from elevation import Elevation
 from indicies import *
+from model import SolidElevationModel
 
 
 build_config = { 'src': 'mtr-sq.tif',
-                 'sample_rate': 10,
-                 'output_size_x': 600,
-                 'resize_ratio': [0.1, 0.1],
-                 'wall_thickness': 5 #mm
+                 'longest_side':50 
                  }
 
 def build_solid_model():
@@ -32,6 +30,11 @@ def build_solid_model():
     canvas = STLCanvas()
     canvas.add_mesh_sandwich(top, bottom)
     canvas.write_stl("cove_output.stl")
-
     
-main()
+    
+def new_run():
+    builder = Builder(build_config)
+    model = SolidElevationModel(build_config)
+    model.build_stl()
+    
+new_run()

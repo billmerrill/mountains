@@ -74,6 +74,7 @@ class STLCanvas:
                              
         
     def write_stl(self, outfile):
+        print ("Writing %s triangles" % len(self.triangles))
         with open(outfile, 'wb') as dest_file:
             dest_file.write(struct.pack("80sI", b'Quick Release Lever', len(self.triangles)))
             for tri in self.triangles:
