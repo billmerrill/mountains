@@ -61,9 +61,11 @@ class Mesh:
         self.ysize = len(src)
         self.xsize = len(src[0])
         
-    def scale_to_output_size(self, output_size_x):
-        output_ratio = output_size_x / self.get_data_x_size()
+    def scale_to_output_size(self, max_output_size):
+        input_max_data_size = max(self.get_data_x_size(), self.get_data_y_size())
+        output_ratio = max_output_size / input_max_data_size
         self.transform([output_ratio, output_ratio, output_ratio], [0,0,0])
+        
                 
 
 class HorizontalPointPlane(object):

@@ -10,7 +10,8 @@ from model import SolidElevationModel
 
 
 build_config = { 'src': 'mtr-sq.tif',
-                 'longest_side':50 
+                 'output_resolution_max': 50,
+                 'output_physical_max': 200
                  }
 
 def build_solid_model():
