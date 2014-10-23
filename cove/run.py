@@ -2,7 +2,7 @@ from model import SolidElevationModel
 
 
 model_config = { 'src': 'mtr-sq.tif',
-                 'output_resolution_max': 50,
+                 'output_resolution_max': 100,
                  'output_physical_max': 200
                  }
 

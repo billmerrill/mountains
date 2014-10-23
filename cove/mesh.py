@@ -169,73 +169,99 @@ class HorizontalPointPlane(GridShape):
                                      invert_normal))   
         return triangles
         
-# class MeshBasePlate(object):
-#     def __init__(self, top):
-#         pass
-#     
-#     def make_it(self):
-#         if True:
-#         yhalf = sample_height / 2
-#         xhalf = sample_width / 2
-#         yquarter = sample_height / 4
-#         xquarter = sample_width / 4
-# 
-#         negx = make_pt(xquarter, yhalf, 0)
-#         posx = make_pt(xquarter + xhalf, yhalf, 0)
-#         negy = make_pt(xhalf, yquarter, 0)
-#         posy = make_pt(xhalf, yquarter + yhalf, 0)
-# 
-#         # star inset base
-#         for sy in range(0, sample_height-1):
-#             a_triangle = { TA: make_pt(0, sy, 0),
-#                            TB: negx,
-#                            TC: make_pt(0, sy+1, 0)}
-#             z_triangle = { TA: make_pt(sample_width-1, sy, 0),
-#                           TB: make_pt(sample_width-1, sy+1, 0),
-#                           TC: posx }
-# 
-#             mesh.append((compute_normal(a_triangle), a_triangle))
-#             mesh.append((compute_normal(z_triangle), z_triangle))
-# 
-#         for sx in range(0, sample_width-1):
-#             a_triangle = { TA: make_pt(sx, 0, 0),
-#                            TB: make_pt(sx+1, 0, 0),
-#                            TC: negy }
-#             z_triangle = { TA: make_pt(sx, sample_height-1, 0),
-#                            TB: posy,
-#                            TC: make_pt(sx+1, sample_height-1, 0) }
-# 
-#             mesh.append((compute_normal(a_triangle), a_triangle))
-#             mesh.append((compute_normal(z_triangle), z_triangle))
-# 
-# 
-#         a_triangle = { TA: make_pt(0,0,0),
-#                        TB: negy,
-#                        TC: negx }
-#         b_triangle = { TA: negy,
-#                        TB: make_pt(sample_width-1, 0, 0),
-#                        TC: posx }
-#         c_triangle = { TA: posx,
-#                        TB: make_pt(sample_width-1, sample_height-1, 0),
-#                        TC: posy }
-#         d_triangle = { TA: negx,
-#                        TB: posy,
-#                        TC: make_pt(0, sample_height-1, 0) }
-# 
-#         e_triangle = { TA: negy,
-#                        TB: posx,
-#                        TC: negx }
-# 
-#         f_triangle = { TA: posx,
-#                        TB: posy,
-#                        TC: negx }
-# 
-#         mesh.append((compute_normal(a_triangle), a_triangle))
-#         mesh.append((compute_normal(b_triangle), b_triangle))
-#         mesh.append((compute_normal(c_triangle), c_triangle))
-#         mesh.append((compute_normal(d_triangle), d_triangle))
-#         mesh.append((compute_normal(e_triangle), e_triangle))
-#         mesh.append((compute_normal(f_triangle), f_triangle))
-# 
-#     
+class MeshBasePlate(object):
+    '''
+    A custom set of triangles to draw a bottom plate
+    '''
+    
+    def __init__(self, top, elevation=0):
+        self.top = top
+        self.xsize = top.xsize
+        self.ysize = top.ysize
+        self.elevation = elevation
+    
+    def get(self, x, y):
+        orig = self.top.get(x,y)
+        return [orig[PX], orig[PY], self.elevation]  
+        
+    def x_max(self):
+        return self.xsize-1
+        
+    def y_max(self):
+        return self.ysize-1        
+    
+    def triangulate(self):
+        triangles = []
+        
+        def make_pt(x, y, z):
+            orig = self.top.get(x,y)
+            return (orig[PX],orig[PY],self.elevation)
+            
+        sample_height = self.top.y_max()+1
+        sample_width = self.top.x_max()+1
+        
+        yhalf = sample_height / 2
+        xhalf = sample_width / 2
+        yquarter = sample_height / 4
+        xquarter = sample_width / 4
+
+        negx = make_pt(xquarter, yhalf, 0)
+        posx = make_pt(xquarter + xhalf, yhalf, 0)
+        negy = make_pt(xhalf, yquarter, 0)
+        posy = make_pt(xhalf, yquarter + yhalf, 0)
+
+        # star inset base
+        for sy in range(0, sample_height-1):
+            a_triangle = { TA: make_pt(0, sy, 0),
+                           TB: negx,
+                           TC: make_pt(0, sy+1, 0)}
+            z_triangle = { TA: make_pt(sample_width-1, sy, 0),
+                          TB: make_pt(sample_width-1, sy+1, 0),
+                          TC: posx }
+
+            triangles.append(a_triangle)
+            triangles.append(z_triangle)
+
+        for sx in range(0, sample_width-1):
+            a_triangle = { TA: make_pt(sx, 0, 0),
+                           TB: make_pt(sx+1, 0, 0),
+                           TC: negy }
+            z_triangle = { TA: make_pt(sx, sample_height-1, 0),
+                           TB: posy,
+                           TC: make_pt(sx+1, sample_height-1, 0) }
+
+            triangles.append(a_triangle)
+            triangles.append(z_triangle)
+
+
+        a_triangle = { TA: make_pt(0,0,0),
+                       TB: negy,
+                       TC: negx }
+        b_triangle = { TA: negy,
+                       TB: make_pt(sample_width-1, 0, 0),
+                       TC: posx }
+        c_triangle = { TA: posx,
+                       TB: make_pt(sample_width-1, sample_height-1, 0),
+                       TC: posy }
+        d_triangle = { TA: negx,
+                       TB: posy,
+                       TC: make_pt(0, sample_height-1, 0) }
+
+        e_triangle = { TA: negy,
+                       TB: posx,
+                       TC: negx }
+
+        f_triangle = { TA: posx,
+                       TB: posy,
+                       TC: negx }
+
+        triangles.append(a_triangle)
+        triangles.append(b_triangle)
+        triangles.append(c_triangle)
+        triangles.append(d_triangle)
+        triangles.append(e_triangle)
+        triangles.append(f_triangle)
+
+        return triangles
+    
         
