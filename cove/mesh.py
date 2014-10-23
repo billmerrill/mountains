@@ -1,12 +1,87 @@
 from indicies import * 
 import copy
 
-class Mesh:
+class CanvasShape(object):
+    
+    def get_triangles(self):
+        pass 
+
+class GridShape(object):
+    
+    def triangulate_square(self, square, invert_normal = False):
+        ''' assume points like this for right hand rule
+            0  1
+            2  3
+        '''
+        tri = []
+        if invert_normal:
+            return [[square[0], square[1], square[3]],
+                   [square[0], square[3], square[2]]]
+        else:
+            return [[square[0], square[3], square[1]],
+                   [square[0], square[2], square[3]]]   
+                   
+                   
+class MeshSandwich(GridShape):
+    def __init__(self, top, bottom):
+        if not (top.xsize == bottom.xsize and top.ysize == bottom.ysize):
+            print ("CANT MAKE SAMMICHES")
+            return
+        self.xsize = top.xsize
+        self.ysize = top.ysize
+        self.top = top
+        self.bottom = bottom
+ 
+    def triangulate(self):
+        triangles = self.top.triangulate()
+        triangles.extend(self.bottom.triangulate())
+        triangles.extend(self.triangulate_sides())    
+        return triangles
+    
+    def triangulate_sides(self):
+        triangles = []
+        for sy in range(0, self.top.y_max()):
+            triangles.extend(self.triangulate_square([self.top.get(0,sy),
+                             self.top.get(0,sy+1),
+                             self.bottom.get(0,sy),
+                             self.bottom.get(0,sy+1)]))
+            triangles.extend(self.triangulate_square([self.top.get(self.top.x_max(), sy+1),
+                             self.top.get(self.top.x_max(), sy),
+                             self.bottom.get(self.bottom.x_max(), sy+1),
+                             self.bottom.get(self.bottom.x_max(), sy)]))
+            
+                            
+        for sx in range(0, self.top.x_max()):
+            triangles.extend(self.triangulate_square([self.top.get(sx+1,0),
+                             self.top.get(sx,0),
+                             self.bottom.get(sx+1,0),
+                             self.bottom.get(sx,0)]))
+            triangles.extend(self.triangulate_square([self.top.get(sx, self.top.y_max()),
+                             self.top.get(sx+1, self.top.y_max()),
+                             self.bottom.get(sx, self.bottom.y_max()),
+                             self.bottom.get(sx+1, self.bottom.y_max())]))
+                             
+        return triangles
+        
+
+class Mesh(GridShape):
     
     def __init__(self, xsize=0, ysize=0):
         self.xsize = xsize 
         self.ysize = ysize
         self.mesh = []
+            
+    def triangulate(self, invert_normal = False):
+        triangles = []
+        for sy in range(0, self.y_max()):
+            for sx in range(0, self.x_max()):
+                triangles.extend(self.triangulate_square([self.get(sx,sy),
+                                     self.get(sx+1, sy),
+                                     self.get(sx, sy+1),
+                                     self.get(sx+1, sy+1)], 
+                                     invert_normal))        
+                                 
+        return triangles
         
     def add_row(self, row):
         self.mesh.append(row)
@@ -50,9 +125,6 @@ class Mesh:
 
         return self
     
-    def get_pixel_size(self):
-        return [self.mesh[0][1]-self.mesh[0][0], self.mesh[1][0] - self.mesh[0][0]]
-        
     def load_matrix(self, src):
         '''
         src: a 2 dimensional python array
@@ -68,7 +140,7 @@ class Mesh:
         
                 
 
-class HorizontalPointPlane(object):
+class HorizontalPointPlane(GridShape):
     
     def __init__(self, src_mesh, elevation):
         self.src_mesh = src_mesh
@@ -85,4 +157,85 @@ class HorizontalPointPlane(object):
         
     def y_max(self):
         return self.ysize-1
+        
+    def triangulate(self, invert_normal = False):
+        triangles = []
+        for sy in range(0, self.y_max()):
+            for sx in range(0, self.x_max()):
+                triangles.extend(self.triangulate_square([self.get(sx,sy),
+                                     self.get(sx+1, sy),
+                                     self.get(sx, sy+1),
+                                     self.get(sx+1, sy+1)], 
+                                     invert_normal))   
+        return triangles
+        
+# class MeshBasePlate(object):
+#     def __init__(self, top):
+#         pass
+#     
+#     def make_it(self):
+#         if True:
+#         yhalf = sample_height / 2
+#         xhalf = sample_width / 2
+#         yquarter = sample_height / 4
+#         xquarter = sample_width / 4
+# 
+#         negx = make_pt(xquarter, yhalf, 0)
+#         posx = make_pt(xquarter + xhalf, yhalf, 0)
+#         negy = make_pt(xhalf, yquarter, 0)
+#         posy = make_pt(xhalf, yquarter + yhalf, 0)
+# 
+#         # star inset base
+#         for sy in range(0, sample_height-1):
+#             a_triangle = { TA: make_pt(0, sy, 0),
+#                            TB: negx,
+#                            TC: make_pt(0, sy+1, 0)}
+#             z_triangle = { TA: make_pt(sample_width-1, sy, 0),
+#                           TB: make_pt(sample_width-1, sy+1, 0),
+#                           TC: posx }
+# 
+#             mesh.append((compute_normal(a_triangle), a_triangle))
+#             mesh.append((compute_normal(z_triangle), z_triangle))
+# 
+#         for sx in range(0, sample_width-1):
+#             a_triangle = { TA: make_pt(sx, 0, 0),
+#                            TB: make_pt(sx+1, 0, 0),
+#                            TC: negy }
+#             z_triangle = { TA: make_pt(sx, sample_height-1, 0),
+#                            TB: posy,
+#                            TC: make_pt(sx+1, sample_height-1, 0) }
+# 
+#             mesh.append((compute_normal(a_triangle), a_triangle))
+#             mesh.append((compute_normal(z_triangle), z_triangle))
+# 
+# 
+#         a_triangle = { TA: make_pt(0,0,0),
+#                        TB: negy,
+#                        TC: negx }
+#         b_triangle = { TA: negy,
+#                        TB: make_pt(sample_width-1, 0, 0),
+#                        TC: posx }
+#         c_triangle = { TA: posx,
+#                        TB: make_pt(sample_width-1, sample_height-1, 0),
+#                        TC: posy }
+#         d_triangle = { TA: negx,
+#                        TB: posy,
+#                        TC: make_pt(0, sample_height-1, 0) }
+# 
+#         e_triangle = { TA: negy,
+#                        TB: posx,
+#                        TC: negx }
+# 
+#         f_triangle = { TA: posx,
+#                        TB: posy,
+#                        TC: negx }
+# 
+#         mesh.append((compute_normal(a_triangle), a_triangle))
+#         mesh.append((compute_normal(b_triangle), b_triangle))
+#         mesh.append((compute_normal(c_triangle), c_triangle))
+#         mesh.append((compute_normal(d_triangle), d_triangle))
+#         mesh.append((compute_normal(e_triangle), e_triangle))
+#         mesh.append((compute_normal(f_triangle), f_triangle))
+# 
+#     
         
