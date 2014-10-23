@@ -72,9 +72,25 @@ class STLCanvas:
                              s2.get(sx, s2.y_max()),
                              s2.get(sx+1, s2.y_max())])
                              
+    def make_positive(self, base=[1,1,1]):
+        thresh = [1,1,1]
+        for tx, tri in enumerate(self.triangles):
+            for pt in [TA, TB, TC]:
+                thresh[PX] = min(thresh[PX], tri[pt][PX])
+                thresh[PY] = min(thresh[PY], tri[pt][PY])
+                thresh[PZ] = min(thresh[PZ], tri[pt][PZ])
+
+        if thresh != base:
+            inc = numpy.subtract(base, thresh)
+            print("Moving model by %s" % inc)
+            for tx, tri in enumerate(self.triangles):
+                for pt in [TA,TB,TC]:
+                    self.triangles[tx][pt] = numpy.add(tri[pt], inc)
+                    # mesh[tx][1][pt] = numpy.add(mesh[tx][1][pt], inc)    
         
     def write_stl(self, outfile):
         print ("Writing %s triangles" % len(self.triangles))
+        self.make_positive()
         with open(outfile, 'wb') as dest_file:
             dest_file.write(struct.pack("80sI", b'Quick Release Lever', len(self.triangles)))
             for tri in self.triangles:
