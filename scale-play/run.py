@@ -275,62 +275,42 @@ def reproject_then_scale_dataset ( dataset, \
    
     
 def resize_and_scale_scratch(dataset_name):
-    raster_max_output_edge = 805 
+    raster_max_output_edge = 50 
     input_dataset = gdal.Open (dataset_name, gdal.GA_ReadOnly)
     
-    input_x_size = input_dataset.RasterXSize
-    input_y_size = input_dataset.RasterYSize
-    input_datatype = input_dataset.GetRasterBand(1).DataType
-    
     input_xform = input_dataset.GetGeoTransform()
-    input_bounds = (input_xform[0], 
+    input_geobounds = (input_xform[0], 
                    input_xform[3], 
-                   input_xform[0] + (input_xform[1] * input_x_size), 
-                   input_xform[3] + (input_xform[5] * input_y_size))
+                   input_xform[0] + (input_xform[1] * input_dataset.RasterXSize), 
+                   input_xform[3] + (input_xform[5] * input_dataset.RasterYSize))
 
-    # output_bounds = transform_projection(input_bounds) 
     goog_merc = osr.SpatialReference()
     goog_merc.ImportFromEPSG(3857)
     wgs84 = osr.SpatialReference()
     wgs84.ImportFromEPSG(4326)
-    tx = osr.CoordinateTransformation ( wgs84, goog_merc )
-    (ulx, uly, ulz ) = tx.TransformPoint(input_bounds[BULX], input_bounds[BULY])
-    (lrx, lry, lrz ) = tx.TransformPoint(input_bounds[BLRX], input_bounds[BLRY])
-    output_bounds = (ulx, uly, lrx, lry) 
+    xform = osr.CoordinateTransformation(wgs84, goog_merc)
+    (ulx, uly, ulz ) = xform.TransformPoint(input_geobounds[BULX], input_geobounds[BULY])
+    (lrx, lry, lrz ) = xform.TransformPoint(input_geobounds[BLRX], input_geobounds[BLRY])
+    output_geobounds = (ulx, uly, lrx, lry) 
     
-    # input_x2y_ratio = abs((input_xform[1] * input_x_size) / (input_xform[5] * input_y_size))
-    # output_x2y_ratio = abs((output_bounds[BULX] - output_bounds[BLRX]) / (output_bounds[BULY] - output_bounds[BLRY]))
+    (output_x_size, output_y_size) = get_output_raster_size(raster_max_output_edge, output_geobounds)
     
-    (output_x_size, output_y_size) = get_output_raster_size(raster_max_output_edge, output_bounds)
-    
-    output_pixel_spacing = ( ((output_bounds[BULX] - output_bounds[BLRX]) / 
+    output_pixel_spacing = ( ((output_geobounds[BLRX] - output_geobounds[BULX]) / 
                                output_x_size),
-                             ((output_bounds[BULY] - output_bounds[BLRY]) / 
-                               output_y_size))
-                               
-    output_pixel_spacing = ( ((output_bounds[BLRX] - output_bounds[BULX]) / 
-                               output_x_size),
-                             (-(output_bounds[BULY] - output_bounds[BLRY]) / 
+                             (-(output_geobounds[BULY] - output_geobounds[BLRY]) / 
                                output_y_size))
         
-    output_xform = (output_bounds[BULX], 
+    output_xform = (output_geobounds[BULX], 
                     output_pixel_spacing[PX],
                     input_xform[2],
-                    output_bounds[BULY],
+                    output_geobounds[BULY],
                     input_xform[4],
                     output_pixel_spacing[PY])
 
     mem_drv = gdal.GetDriverByName( 'MEM' )
     output_dataset = mem_drv.Create('', output_x_size, output_y_size, 
-        1, input_datatype)
+        1, input_dataset.GetRasterBand(1).DataType)
     output_dataset.SetGeoTransform(output_xform)
-    print input_bounds
-    print
-    print output_bounds
-    print
-    print input_xform
-    print
-    print output_xform
     output_dataset.SetProjection ( goog_merc.ExportToWkt() )
 
     res = gdal.ReprojectImage(input_dataset, output_dataset, 
@@ -353,18 +333,6 @@ def get_output_raster_size(r_max, output_bounds):
         
     return (int(x_r), int(y_r))
    
-    
-def transform_projection(input_bounds):
-    goog_merc = osr.SpatialReference ()
-    goog_merc.ImportFromEPSG ( epsg_to )
-    wgs84 = osr.SpatialReference ()
-    wgs84.ImportFromEPSG ( epsg_from )
-    tx = osr.CoordinateTransformation ( wgs84, goog_merc )
-    (ulx, uly, ulz ) = tx.TransformPoint(input_bounds[BULX], input_bounds[BULY])
-    (lrx, lry, lrz ) = tx.TransformPoint(input_bounds[BLRX], input_bounds[BLRY])
-    
-    return (ulx, uly, lrx, lry)   
-
     
     
 def get_pixel_meters(dataset):
