@@ -4,7 +4,7 @@ import osr
 from haversine import haversine
 # from pyproj import Proj, transform
 import pyproj
-form indcies import *
+from indicies import *
 
 
 def reproject_dataset ( dataset, \
@@ -275,7 +275,7 @@ def reproject_then_scale_dataset ( dataset, \
    
     
 def resize_and_scale_scratch(dataset_name):
-    raster_max_output_edge = 50
+    raster_max_output_edge = 805 
     input_dataset = gdal.Open (dataset_name, gdal.GA_ReadOnly)
     
     input_x_size = input_dataset.RasterXSize
@@ -290,12 +290,12 @@ def resize_and_scale_scratch(dataset_name):
 
     # output_bounds = transform_projection(input_bounds) 
     goog_merc = osr.SpatialReference()
-    goog_merc.ImportFromEPSG (3857)
+    goog_merc.ImportFromEPSG(3857)
     wgs84 = osr.SpatialReference()
-    wgs84.ImportFromEPSG (4326)
+    wgs84.ImportFromEPSG(4326)
     tx = osr.CoordinateTransformation ( wgs84, goog_merc )
     (ulx, uly, ulz ) = tx.TransformPoint(input_bounds[BULX], input_bounds[BULY])
-    (lrx, lry, lrz ) = tx.TransformPoint(input_bounds[BLRX] input_bounds[BLRY])
+    (lrx, lry, lrz ) = tx.TransformPoint(input_bounds[BLRX], input_bounds[BLRY])
     output_bounds = (ulx, uly, lrx, lry) 
     
     # input_x2y_ratio = abs((input_xform[1] * input_x_size) / (input_xform[5] * input_y_size))
@@ -306,35 +306,49 @@ def resize_and_scale_scratch(dataset_name):
     output_pixel_spacing = ( ((output_bounds[BULX] - output_bounds[BLRX]) / 
                                output_x_size),
                              ((output_bounds[BULY] - output_bounds[BLRY]) / 
-                               output_Y_size))
+                               output_y_size))
+                               
+    output_pixel_spacing = ( ((output_bounds[BLRX] - output_bounds[BULX]) / 
+                               output_x_size),
+                             (-(output_bounds[BULY] - output_bounds[BLRY]) / 
+                               output_y_size))
         
     output_xform = (output_bounds[BULX], 
-                    output_pixel_spacing[PX]
+                    output_pixel_spacing[PX],
                     input_xform[2],
-                    output_bounds[BULY]
-                    input_xform[4]
+                    output_bounds[BULY],
+                    input_xform[4],
                     output_pixel_spacing[PY])
 
     mem_drv = gdal.GetDriverByName( 'MEM' )
     output_dataset = mem_drv.Create('', output_x_size, output_y_size, 
         1, input_datatype)
     output_dataset.SetGeoTransform(output_xform)
+    print input_bounds
+    print
+    print output_bounds
+    print
+    print input_xform
+    print
+    print output_xform
     output_dataset.SetProjection ( goog_merc.ExportToWkt() )
 
     res = gdal.ReprojectImage(input_dataset, output_dataset, 
-                wgs84.ExportToWkt(), googmerc.ExportToWkt(), 
+                wgs84.ExportToWkt(), goog_merc.ExportToWkt(), 
                 gdal.GRA_Bilinear)
+                
+    return output_dataset
 
-def get_output_raster_size(r_max, bounds):
-    x_r, y_r = 0
+def get_output_raster_size(r_max, output_bounds):
+    x_r = y_r = 0
     x_g = abs(output_bounds[BULX] - output_bounds[BLRX]) 
     y_g = abs(output_bounds[BULY] - output_bounds[BLRY])
     
     if x_g > y_g:
-        x_r = r_amx
+        x_r = r_max
         y_r = x_r * (y_g / x_g)
     else:
-        y_r = y_max
+        y_r = r_max
         x_r = y_r * (x_g / y_g)
         
     return (int(x_r), int(y_r))
@@ -347,7 +361,7 @@ def transform_projection(input_bounds):
     wgs84.ImportFromEPSG ( epsg_from )
     tx = osr.CoordinateTransformation ( wgs84, goog_merc )
     (ulx, uly, ulz ) = tx.TransformPoint(input_bounds[BULX], input_bounds[BULY])
-    (lrx, lry, lrz ) = tx.TransformPoint(input_bounds[BLRX] input_bounds[BLRY])
+    (lrx, lry, lrz ) = tx.TransformPoint(input_bounds[BLRX], input_bounds[BLRY])
     
     return (ulx, uly, lrx, lry)   
 
@@ -363,12 +377,13 @@ def get_pixel_meters(dataset):
     return (math.copysign(x_size_m, x_size_deg), math.copysign(y_size_m, y_size_deg))
     
 def experiment():
-    reprojected_dataset = reproject_then_scale_dataset ( "mtr-sq-4326.tif")
+    # reprojected_dataset = reproject_dataset ( "mtr-sq-4326.tif")
+    reprojected_dataset = resize_and_scale_scratch ( "mtr-sq-4326.tif")
     # This is a GDAL object. We can read it
     reprojected_data = reprojected_dataset.ReadAsArray ()
     # Let's save it as a GeoTIFF.
     driver = gdal.GetDriverByName ( "GTiff" )
-    dst_ds = driver.CreateCopy( "mtr-sq-3857.tif", reprojected_dataset, 0 )
+    dst_ds = driver.CreateCopy( "3857-mtr-sq-3857.tif", reprojected_dataset, 0 )
     dst_ds = None # Flush the dataset to disk
 
 experiment()
