@@ -67,8 +67,10 @@ class Elevation(object):
         src_xform = self.dataset.GetGeoTransform()
         src_datatype = self.dataset.GetRasterBand(1).DataType
         
-        dst_dim = [int(self.dataset.RasterYSize * resize_ratio[PX]),
-                   int(self.dataset.RasterXSize * resize_ratio[PY])]
+        dst_dim = [int(self.dataset.RasterXSize * resize_ratio[PX]),
+                   int(self.dataset.RasterYSize * resize_ratio[PY])]
+                   
+        print("Destination Dimsions %s x %s" % (dst_dim[PX], dst_dim[PY]))
         dst_pixel_spacing = [src_xform[1] / resize_ratio[PX], 
                              src_xform[5] / resize_ratio[PY] ]           
 

@@ -275,7 +275,7 @@ def reproject_then_scale_dataset ( dataset, \
    
     
 def resize_and_scale_scratch(dataset_name):
-    raster_max_output_edge = 50 
+    raster_max_output_edge = 400 
     input_dataset = gdal.Open (dataset_name, gdal.GA_ReadOnly)
     
     input_xform = input_dataset.GetGeoTransform()
@@ -286,8 +286,10 @@ def resize_and_scale_scratch(dataset_name):
 
     goog_merc = osr.SpatialReference()
     goog_merc.ImportFromEPSG(3857)
+    # wgs84 = osr.SpatialReference()
+    # wgs84.ImportFromEPSG(4326)
     wgs84 = osr.SpatialReference()
-    wgs84.ImportFromEPSG(4326)
+    wgs84.ImportFromWkt(input_dataset.GetProjection())
     xform = osr.CoordinateTransformation(wgs84, goog_merc)
     (ulx, uly, ulz ) = xform.TransformPoint(input_geobounds[BULX], input_geobounds[BULY])
     (lrx, lry, lrz ) = xform.TransformPoint(input_geobounds[BLRX], input_geobounds[BLRY])
@@ -319,7 +321,7 @@ def resize_and_scale_scratch(dataset_name):
                 
     return output_dataset
 
-def get_output_raster_size(r_max, output_bounds):
+def get_resampled_raster_size(r_max, output_bounds):
     x_r = y_r = 0
     x_g = abs(output_bounds[BULX] - output_bounds[BLRX]) 
     y_g = abs(output_bounds[BULY] - output_bounds[BLRY])

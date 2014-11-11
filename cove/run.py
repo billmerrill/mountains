@@ -1,13 +1,13 @@
-from model import SolidElevationModel
+from model import SolidElevationModel, DebugElevationModel
 
 
-model_config = { 'src': 'mtr-sq.tif',
+model_config = { 'src': 'mto.tif',
                  'output_resolution_max': 100,
                  'output_physical_max': 200
                  }
 
 def main():
-    model = SolidElevationModel(model_config)
+    model = DebugElevationModel(model_config)
     model.build_stl()
     
 main()
